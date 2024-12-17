@@ -1,9 +1,6 @@
 package com.rentalplatform.service;
 
-import com.rentalplatform.dto.LoginDto;
-import com.rentalplatform.dto.RegisterDto;
-import com.rentalplatform.dto.TokenResponse;
-import com.rentalplatform.dto.UserDto;
+import com.rentalplatform.dto.*;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.UserDtoFactory;
@@ -12,7 +9,9 @@ import com.rentalplatform.entity.RoleEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.repository.RoleRepository;
 import com.rentalplatform.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.sql.Delete;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,12 +27,13 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserDtoFactory userDtoFactory;
     private final RoleRepository roleRepository;
+    private final UserDtoFactory userDtoFactory;
     private final JwtTokenUtil jwtTokenUtil;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
+    @Transactional
     public UserDto signUp(RegisterDto registerDto) {
         if (userRepository.existsByUsername(registerDto.getUsername())) {
             throw new BadRequestException("Username is already taken");
@@ -72,9 +72,62 @@ public class UserService {
             return TokenResponse.builder()
                     .token(jwtTokenUtil.generateToken(userDetails))
                     .build();
-        }
-        catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             throw new BadRequestException("Invalid password or email");
         }
+    }
+
+    public UserDto getProfileInfo(String username) {
+        UserEntity currentUser = getCurrentUser(username);
+        return userDtoFactory.makeUserDto(currentUser);
+    }
+
+    @Transactional
+    public UserDto updateProfile(String username, UpdateProfileDto dto) {
+        UserEntity currentUser = getCurrentUser(username);
+
+        if (dto.getUsername() != null && !dto.getUsername().isEmpty()) {
+            if (!dto.getUsername().equals(username) && userRepository.existsByUsername(dto.getUsername())) {
+                throw new BadRequestException("User with name '%s' already exists".formatted(dto.getUsername()));
+            }
+            currentUser.setUsername(dto.getUsername());
+        }
+
+        if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            if (!dto.getEmail().equals(currentUser.getEmail()) && userRepository.existsByEmail(dto.getEmail())) {
+                throw new BadRequestException("User with email '%s' already exists".formatted(dto.getEmail()));
+            }
+            currentUser.setEmail(dto.getEmail());
+        }
+
+        if (dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+            if (dto.getCurrentPassword() == null || dto.getCurrentPassword().isEmpty()) {
+                throw new BadRequestException("To change your password you need to specify your  current password");
+            }
+            if (!passwordEncoder.matches(dto.getCurrentPassword(), currentUser.getPassword())) {
+                throw new BadRequestException("The current password is incorrect");
+            }
+            currentUser.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+
+        userRepository.save(currentUser);
+
+        return userDtoFactory.makeUserDto(currentUser);
+    }
+
+    @Transactional
+    public void deleteProfile(String username, DeleteProfileDto deleteDto) {
+        UserEntity currentUser = getCurrentUser(username);
+
+        if(!passwordEncoder.matches(deleteDto.getPassword(), currentUser.getPassword())) {
+            throw new BadRequestException("The current password is incorrect");
+        }
+
+        userRepository.delete(currentUser);
+    }
+
+    private UserEntity getCurrentUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
     }
 }
