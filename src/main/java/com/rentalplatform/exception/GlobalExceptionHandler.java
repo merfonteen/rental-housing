@@ -38,13 +38,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage(), Instant.now());
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "The request body cannot be empty or invalid.",
-                Instant.now());
-    }
-
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -59,6 +52,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Validation error",
                 Instant.now(),
                 errors
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "The request body cannot be empty or invalid.",
+                Instant.now()
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
