@@ -41,8 +41,6 @@ public class ListingEntity {
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingEntity> bookings = new ArrayList<>();
 
-    private Boolean isAvailable;
-
     @Builder.Default
     private Instant createdAt = Instant.now();
 }

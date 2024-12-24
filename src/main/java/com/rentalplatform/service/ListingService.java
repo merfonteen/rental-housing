@@ -12,6 +12,7 @@ import com.rentalplatform.factory.ListingDtoFactory;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +70,7 @@ public class ListingService {
         return listingDtoFactory.makeListingDto(listings);
     }
 
+    @Transactional
     public ListingDto createListing(CreationListingDto creationListingDto, String currentUsername) {
         UserEntity landlord = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new BadRequestException("User '%s' not found".formatted(currentUsername)));
@@ -89,13 +91,13 @@ public class ListingService {
                         .numberOfRooms(creationListingDto.getNumberOfRooms())
                         .type(creationListingDto.getType())
                         .landlord(landlord)
-                        .isAvailable(true)
                         .build()
         );
 
         return listingDtoFactory.makeListingDto(listing);
     }
 
+    @Transactional
     public ListingDto editListing(Long listingId, EditListingDto editListingDto, String currentUsername) {
         ListingEntity listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
@@ -134,6 +136,7 @@ public class ListingService {
         return listingDtoFactory.makeListingDto(updatedListing);
     }
 
+    @Transactional
     public void deleteListing(Long listingId, String currentUsername) {
         ListingEntity listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
