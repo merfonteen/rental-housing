@@ -103,6 +103,27 @@ public class ListingService {
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
                         formatted(listingId)));
 
+        validateUpdatingListing(editListingDto, currentUsername, listing);
+
+        ListingEntity updatedListing = listingRepository.save(listing);
+
+        return listingDtoFactory.makeListingDto(updatedListing);
+    }
+
+    @Transactional
+    public void deleteListing(Long listingId, String currentUsername) {
+        ListingEntity listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
+                        formatted(listingId)));
+
+        if(!listing.getLandlord().getUsername().equals(currentUsername)) {
+            throw new BadRequestException("You are not the owner of this listing");
+        }
+
+        listingRepository.delete(listing);
+    }
+
+    private static void validateUpdatingListing(EditListingDto editListingDto, String currentUsername, ListingEntity listing) {
         if(!listing.getLandlord().getUsername().equals(currentUsername)) {
             throw new BadRequestException("You are not the owner of this listing");
         }
@@ -130,22 +151,5 @@ public class ListingService {
         if(editListingDto.getType() != null) {
             listing.setType(editListingDto.getType());
         }
-
-        ListingEntity updatedListing = listingRepository.save(listing);
-
-        return listingDtoFactory.makeListingDto(updatedListing);
-    }
-
-    @Transactional
-    public void deleteListing(Long listingId, String currentUsername) {
-        ListingEntity listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
-                        formatted(listingId)));
-
-        if(!listing.getLandlord().getUsername().equals(currentUsername)) {
-            throw new BadRequestException("You are not the owner of this listing");
-        }
-
-        listingRepository.delete(listing);
     }
 }

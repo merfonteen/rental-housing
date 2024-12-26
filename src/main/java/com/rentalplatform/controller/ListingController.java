@@ -24,6 +24,8 @@ public class ListingController {
     public static final String ALL_LISTINGS = "/all-listings";
     public static final String LISTING_BY_ID = "/{id}";
 
+    //method for getting all reviews
+
     @GetMapping(MY_LISTINGS)
     public ResponseEntity<List<ListingDto>> getListings(Principal principal) {
         return ResponseEntity.ok(listingService.getMyListings(principal.getName()));

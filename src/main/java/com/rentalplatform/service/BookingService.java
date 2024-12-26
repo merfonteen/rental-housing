@@ -43,13 +43,91 @@ public class BookingService {
         Instant startDateTime = bookingDto.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endDateTime = bookingDto.getEndDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        ListingEntity listingToBook = listingRepository.findById(bookingDto.getListingId())
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
-                        formatted(bookingDto.getListingId())));
+        ListingEntity listingToBook = findListingByIdFromBookingDto(bookingDto);
+        UserEntity user = findUserByUsername(username);
 
-        UserEntity user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
+        validateBookingCreation(listingToBook, user, startDateTime, endDateTime);
 
+        BookingEntity booking = BookingEntity.builder()
+                .listing(listingToBook)
+                .tenant(user)
+                .startDate(startDateTime)
+                .endDate(endDateTime)
+                .status(BookingStatus.PENDING)
+                .build();
+
+        BookingEntity savedBooking = bookingRepository.save(booking);
+
+        return bookingDtoFactory.makeBookingDto(savedBooking);
+    }
+
+    @Transactional
+    public boolean confirmBookingByLandlord(Long bookingId, String username) {
+        BookingEntity booking = findBookingById(bookingId);
+
+        if (!booking.getListing().getLandlord().getUsername().equals(username)) {
+            throw new BadRequestException("You are not authorized to confirm this booking");
+        }
+
+        validateBookingStatus(booking, BookingStatus.PENDING,
+                "Only bookings with status 'PENDING' can be declined");
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        bookingRepository.save(booking);
+
+        return true;
+    }
+
+    @Transactional
+    public boolean cancelBookingByTenant(Long bookingId, String username) {
+        BookingEntity booking = findBookingById(bookingId);
+
+        validateLandlord(username, booking.getListing());
+
+        if (booking.getStartDate().isBefore(Instant.now())) {
+            throw new BadRequestException("You cannot cancel a booking already that has already started");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        return true;
+    }
+
+    @Transactional
+    public boolean declineBookingByLandlord(Long bookingId, String username) {
+        BookingEntity booking = findBookingById(bookingId);
+
+        validateLandlord(username, booking.getListing());
+        validateBookingStatus(booking, BookingStatus.PENDING,
+                "Only bookings with status 'PENDING' can be declined");
+
+        booking.setStatus(BookingStatus.CANCELLED);
+
+        bookingRepository.save(booking);
+
+        return true;
+    }
+
+    private void validateBookingStatus(BookingEntity booking, BookingStatus requiredStatus, String errorMessage) {
+        if (booking.getStatus() != requiredStatus) {
+            throw new BadRequestException(errorMessage);
+        }
+    }
+
+    private static void validateLandlord(String username, ListingEntity listing) {
+        if (!listing.getLandlord().getUsername().equals(username)) {
+            throw new BadRequestException("You are not authorized to cancel this booking");
+        }
+    }
+
+    private BookingEntity findBookingById(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
+    }
+
+    private static void validateBookingCreation(ListingEntity listingToBook, UserEntity user, Instant startDateTime,
+                                                Instant endDateTime) {
         if (listingToBook.getLandlord().getUsername().equals(user.getUsername())) {
             throw new BadRequestException("You cannot book your own listing");
         }
@@ -69,77 +147,16 @@ public class BookingService {
                         "The booking start date is only available after: " + lastBooking.getEndDate());
             }
         }
-
-        BookingEntity booking = BookingEntity.builder()
-                .listing(listingToBook)
-                .tenant(user)
-                .startDate(startDateTime)
-                .endDate(endDateTime)
-                .status(BookingStatus.PENDING)
-                .build();
-
-        BookingEntity savedBooking = bookingRepository.save(booking);
-
-        return bookingDtoFactory.makeBookingDto(savedBooking);
     }
 
-    @Transactional
-    public boolean confirmBookingByLandlord(Long bookingId, String username) {
-        BookingEntity booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
-
-        if (!booking.getListing().getLandlord().getUsername().equals(username)) {
-            throw new BadRequestException("You are not authorized to confirm this booking");
-        }
-
-        validateBookingStatus(booking, BookingStatus.PENDING,
-                "Only bookings with status 'PENDING' can be declined");
-
-        booking.setStatus(BookingStatus.CONFIRMED);
-        bookingRepository.save(booking);
-
-        return true;
+    private UserEntity findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
     }
 
-    @Transactional
-    public boolean cancelBookingByTenant(Long bookingId, String username) {
-        BookingEntity booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
-
-        validateLandlord(username, booking.getListing());
-
-        if (booking.getStartDate().isBefore(Instant.now())) {
-            throw new BadRequestException("You cannot cancel a booking already that has already started");
-        }
-
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
-
-        return true;
-    }
-
-    @Transactional
-    public boolean declineBookingByLandlord(Long bookingId, String username) {
-        BookingEntity booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
-        validateLandlord(username, booking.getListing());
-        validateBookingStatus(booking, BookingStatus.PENDING,
-                "Only bookings with status 'PENDING' can be declined");
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
-
-        return true;
-    }
-
-    private void validateBookingStatus(BookingEntity booking, BookingStatus requiredStatus, String errorMessage) {
-        if (booking.getStatus() != requiredStatus) {
-            throw new BadRequestException(errorMessage);
-        }
-    }
-
-    private static void validateLandlord(String username, ListingEntity listing) {
-        if (!listing.getLandlord().getUsername().equals(username)) {
-            throw new BadRequestException("You are not authorized to cancel this booking");
-        }
+    private ListingEntity findListingByIdFromBookingDto(CreationBookingDto bookingDto) {
+        return listingRepository.findById(bookingDto.getListingId())
+                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
+                        formatted(bookingDto.getListingId())));
     }
 }
