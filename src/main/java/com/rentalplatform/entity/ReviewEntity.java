@@ -12,7 +12,11 @@ import java.util.Objects;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews",
+        indexes = {
+                @Index(name = "idx_review_listing_id", columnList = "listing_id"),
+                @Index(name = "idx_review_tenant_id", columnList = "tenant_id")
+        })
 public class ReviewEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

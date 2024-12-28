@@ -14,7 +14,15 @@ import java.util.Objects;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "listings")
+@Table(name = "listings",
+        indexes = {
+                @Index(name = "idx_listing_title", columnList = "title"),
+                @Index(name = "idx_listing_address", columnList = "address"),
+                @Index(name = "idx_listing_price", columnList = "price"),
+                @Index(name = "idx_listing_number_of_rooms", columnList = "number_of_rooms"),
+                @Index(name = "idx_listing_type", columnList = "type"),
+                @Index(name = "idx_listing_landlord_id", columnList = "landlord_id")
+        })
 public class ListingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
