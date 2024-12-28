@@ -5,6 +5,7 @@ import com.rentalplatform.dto.CreationBookingDto;
 import com.rentalplatform.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,13 +26,17 @@ public class BookingController {
     public static final String DECLINE_BY_ID = "/decline/{bookingId}";
 
     @GetMapping(MY_BOOKINGS)
-    public ResponseEntity<List<BookingDto>> getBookings(Principal principal) {
-        return ResponseEntity.ok(bookingService.getBookings(principal.getName()));
+    public ResponseEntity<Page<BookingDto>> getBookings(Principal principal,
+                                                        @RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(bookingService.getBookings(principal.getName(), page, size));
     }
 
     @GetMapping(BOOKINGS_FOR_LANDLORD)
-    public ResponseEntity<List<BookingDto>> getBookingsForLandlord(Principal principal) {
-        return ResponseEntity.ok(bookingService.getBookingsForLandlord(principal.getName()));
+    public ResponseEntity<Page<BookingDto>> getBookingsForLandlord(Principal principal,
+                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                   @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(bookingService.getBookingsForLandlord(principal.getName(), page, size));
     }
 
     @PostMapping

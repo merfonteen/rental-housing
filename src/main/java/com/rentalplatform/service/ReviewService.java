@@ -16,6 +16,8 @@ import com.rentalplatform.repository.ReviewRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,9 +32,17 @@ public class ReviewService {
     private final BookingRepository bookingRepository;
     private final ListingRepository listingRepository;
 
-    public List<ReviewDto> getReviewsForListing(Long listingId) {
-        ListingEntity listing = findListingById(listingId);
-        return reviewDtoFactory.makeReviewDto(reviewRepository.findAllByListing(listing));
+    public Page<ReviewDto> getReviewsForListing(Long listingId, int page, int size) {
+        listingRepository.findById(listingId).orElseThrow(
+                () -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
+
+        if(size > 50) {
+            throw new BadRequestException("Maximum page size is 50");
+        }
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<ReviewEntity> reviews = reviewRepository.findAllByListingId(listingId, pageRequest);
+        return reviews.map(reviewDtoFactory::makeReviewDto);
     }
 
     @Transactional

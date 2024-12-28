@@ -14,6 +14,8 @@ import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -30,12 +32,16 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final BookingDtoFactory bookingDtoFactory;
 
-    public List<BookingDto> getBookings(String username) {
-        return bookingDtoFactory.makeBookingDto(bookingRepository.findAllByTenantUsernameOrLandlordUsername(username));
+    public Page<BookingDto> getBookings(String username, int page, int size) {
+        PageRequest request = PageRequest.of(page, size);
+        Page<BookingEntity> bookings = bookingRepository.findAllByTenantUsernameOrLandlordUsername(username, request);
+        return bookings.map(bookingDtoFactory::makeBookingDto);
     }
 
-    public List<BookingDto> getBookingsForLandlord(String username) {
-        return bookingDtoFactory.makeBookingDto(bookingRepository.findAllByListingLandlordUsername(username));
+    public Page<BookingDto> getBookingsForLandlord(String username, int page, int size) {
+        PageRequest request = PageRequest.of(page, size);
+        Page<BookingEntity> bookings = bookingRepository.findAllByListingLandlordUsername(username, request);
+        return bookings.map(bookingDtoFactory::makeBookingDto);
     }
 
     @Transactional

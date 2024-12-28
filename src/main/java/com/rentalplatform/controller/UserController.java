@@ -21,6 +21,7 @@ public class UserController {
     private final String GET_PROFILE_INFO = "/me";
     private final String UPDATE_PROFILE = "/update";
     private final String DELETE_PROFILE = "/delete";
+    private final String GET_LANDLORD_ROLE = "/role/landlord";
 
     @PostMapping(SIGN_UP)
     public ResponseEntity<UserDto> signUp(@Valid @RequestBody RegisterDto registerDto) {
@@ -40,6 +41,11 @@ public class UserController {
     @PatchMapping(UPDATE_PROFILE)
     public ResponseEntity<UserDto> updateProfile(Principal principal, @Valid @RequestBody UpdateProfileDto dto) {
         return ResponseEntity.ok(userService.updateProfile(principal.getName(), dto));
+    }
+
+    @PatchMapping(GET_LANDLORD_ROLE)
+    public ResponseEntity<UserDto> getLandlordRole(Principal principal) {
+        return ResponseEntity.ok(userService.getLandlordRole(principal.getName()));
     }
 
     @DeleteMapping(DELETE_PROFILE)

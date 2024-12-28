@@ -14,6 +14,8 @@ import com.rentalplatform.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,17 +29,24 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final ListingDtoFactory listingDtoFactory;
 
-    public List<ListingDto> getMyListings(String currentUsername) {
+    public Page<ListingDto> getMyListings(String currentUsername, int page, int size) {
         UserEntity landlord = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new BadRequestException("User '%s' not found".formatted(currentUsername)));
 
-        List<ListingEntity> listings = listingRepository.findAllByLandlord(landlord);
+        if(size > 50) {
+            throw new BadRequestException("Maximum page size is 50");
+        }
 
-        return listingDtoFactory.makeListingDto(listings);
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<ListingEntity> listings = listingRepository.findAllWithReviewsByLandlordId(landlord.getId(), pageRequest);
+
+        return listings.map(listingDtoFactory::makeListingDtoWithReviews);
     }
 
-    public List<ListingDto> getAllListings(FilterListingsDto filter) {
-        List<ListingEntity> listings = listingRepository.findAll((root, query, criteriaBuilder) -> {
+    public Page<ListingDto> getAllListings(FilterListingsDto filter, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        Page<ListingEntity> listings = listingRepository.findAll((root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if(filter.getTitle() != null && !filter.getTitle().isEmpty()) {
@@ -65,9 +74,9 @@ public class ListingService {
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        });
+        }, pageRequest);
 
-        return listingDtoFactory.makeListingDto(listings);
+        return listings.map(listingDtoFactory::makeListingDtoWithReviews);
     }
 
     @Transactional

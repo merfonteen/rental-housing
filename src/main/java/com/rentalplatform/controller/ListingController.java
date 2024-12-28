@@ -7,6 +7,7 @@ import com.rentalplatform.dto.ListingDto;
 import com.rentalplatform.service.ListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,16 +25,18 @@ public class ListingController {
     public static final String ALL_LISTINGS = "/all-listings";
     public static final String LISTING_BY_ID = "/{id}";
 
-    //method for getting all reviews
-
     @GetMapping(MY_LISTINGS)
-    public ResponseEntity<List<ListingDto>> getListings(Principal principal) {
-        return ResponseEntity.ok(listingService.getMyListings(principal.getName()));
+    public ResponseEntity<Page<ListingDto>> getListings(Principal principal,
+                                                        @RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(listingService.getMyListings(principal.getName(), page, size));
     }
 
     @GetMapping(ALL_LISTINGS)
-    public ResponseEntity<List<ListingDto>> getAllListings(@Valid @ModelAttribute FilterListingsDto filterDto) {
-        return ResponseEntity.ok(listingService.getAllListings(filterDto));
+    public ResponseEntity<Page<ListingDto>> getAllListings(@Valid @ModelAttribute FilterListingsDto filterDto,
+                                                           @RequestParam(defaultValue = "0") int page,
+                                                           @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(listingService.getAllListings(filterDto, page, size));
     }
 
     @PostMapping

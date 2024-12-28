@@ -11,6 +11,7 @@ import com.rentalplatform.repository.RoleRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.weaver.ast.Not;
 import org.hibernate.sql.Delete;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -80,6 +81,19 @@ public class UserService {
     public UserDto getProfileInfo(String username) {
         UserEntity currentUser = getCurrentUser(username);
         return userDtoFactory.makeUserDto(currentUser);
+    }
+
+    @Transactional
+    public UserDto getLandlordRole(String username) {
+        UserEntity user = getCurrentUser(username);
+        RoleEntity landlordRole = roleRepository.findByName("LANDLORD")
+                .orElseThrow(() -> new NotFoundException("Role not found"));
+
+        user.getRoles().add(landlordRole);
+
+        UserEntity savedUser = userRepository.save(user);
+
+        return userDtoFactory.makeUserDto(savedUser);
     }
 
     @Transactional

@@ -6,6 +6,7 @@ import com.rentalplatform.dto.UpdateReviewDto;
 import com.rentalplatform.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +21,10 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping("/listing/{listingId}")
-    public ResponseEntity<List<ReviewDto>> getReviewsForListing(@PathVariable Long listingId) {
-        return ResponseEntity.ok(reviewService.getReviewsForListing(listingId));
+    public ResponseEntity<Page<ReviewDto>> getReviewsForListing(@PathVariable Long listingId,
+                                                                @RequestParam(defaultValue = "0") int page,
+                                                                @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(reviewService.getReviewsForListing(listingId, page, size));
     }
 
     @PostMapping
