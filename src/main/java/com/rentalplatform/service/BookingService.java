@@ -2,10 +2,7 @@ package com.rentalplatform.service;
 
 import com.rentalplatform.dto.BookingDto;
 import com.rentalplatform.dto.CreationBookingDto;
-import com.rentalplatform.entity.BookingEntity;
-import com.rentalplatform.entity.BookingStatus;
-import com.rentalplatform.entity.ListingEntity;
-import com.rentalplatform.entity.UserEntity;
+import com.rentalplatform.entity.*;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.BookingDtoFactory;
@@ -26,11 +23,12 @@ import java.time.temporal.ChronoUnit;
 @Service
 public class BookingService {
 
-    private final EmailService emailService;
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final BookingRepository bookingRepository;
     private final BookingDtoFactory bookingDtoFactory;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public Page<BookingDto> getBookings(String username, int page, int size) {
         PageRequest request = PageRequest.of(page, size);
@@ -68,6 +66,10 @@ public class BookingService {
                 "New Booking Request",
                 "A new booking request has been made for your listing '%s'".formatted(listingToBook.getTitle()));
 
+        notificationService.createNotification("A new booking request has been made for your listing '%s'"
+                        .formatted(listingToBook.getTitle()),
+                listingToBook.getLandlord());
+
         return bookingDtoFactory.makeBookingDto(savedBooking);
     }
 
@@ -89,6 +91,10 @@ public class BookingService {
                 "Booking Confirmed",
                 "Your booking for listing '%s' has been confirmed".formatted(booking.getListing().getTitle()));
 
+        notificationService.createNotification("Your booking for listing '%s' has been confirmed"
+                        .formatted(booking.getListing().getTitle()),
+                booking.getTenant());
+
         return true;
     }
 
@@ -109,6 +115,10 @@ public class BookingService {
                 "Booking Canceled",
                 "User has been canceled the booking for listing '%s'".formatted(booking.getListing().getTitle()));
 
+        notificationService.createNotification("User has been canceled the booking for listing '%s'"
+                        .formatted(booking.getListing().getTitle()),
+                booking.getListing().getLandlord());
+
         return true;
     }
 
@@ -127,6 +137,10 @@ public class BookingService {
         emailService.sendEmail(booking.getTenant().getEmail(),
                 "Booking Declined",
                 "The landlord has declined your booking '%s'".formatted(booking.getListing().getTitle()));
+
+        notificationService.createNotification("The landlord has declined your booking '%s'"
+                        .formatted(booking.getListing().getTitle()),
+                booking.getTenant());
 
         return true;
     }

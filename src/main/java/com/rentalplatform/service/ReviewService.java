@@ -3,10 +3,7 @@ package com.rentalplatform.service;
 import com.rentalplatform.dto.CreationReviewDto;
 import com.rentalplatform.dto.ReviewDto;
 import com.rentalplatform.dto.UpdateReviewDto;
-import com.rentalplatform.entity.BookingStatus;
-import com.rentalplatform.entity.ListingEntity;
-import com.rentalplatform.entity.ReviewEntity;
-import com.rentalplatform.entity.UserEntity;
+import com.rentalplatform.entity.*;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.ReviewDtoFactory;
@@ -24,18 +21,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReviewService {
 
-    private final EmailService emailService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewDtoFactory reviewDtoFactory;
     private final BookingRepository bookingRepository;
     private final ListingRepository listingRepository;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
 
     public Page<ReviewDto> getReviewsForListing(Long listingId, int page, int size) {
         listingRepository.findById(listingId).orElseThrow(
                 () -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
 
-        if(size > 50) {
+        if (size > 50) {
             throw new BadRequestException("Maximum page size is 50");
         }
 
@@ -67,6 +65,10 @@ public class ReviewService {
                 "Your listing '%s' has received a new review from %s.\n Comment: %s"
                         .formatted(listing.getTitle(), review.getTenant(), review.getComment()));
 
+        notificationService.createNotification("Your listing '%s' has received a new review from %s.\n Comment: %s"
+                        .formatted(listing.getTitle(), review.getTenant(), review.getComment()),
+                listing.getLandlord());
+
         return reviewDtoFactory.makeReviewDto(savedReview);
     }
 
@@ -86,7 +88,7 @@ public class ReviewService {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
 
-        if(!review.getTenant().getUsername().equals(username)) {
+        if (!review.getTenant().getUsername().equals(username)) {
             throw new BadRequestException("You are not authorized to delete this review");
         }
 
@@ -100,25 +102,25 @@ public class ReviewService {
     }
 
     private void validateReviewCreation(String username, ListingEntity listing, UserEntity critic) {
-        if(listing.getLandlord().getUsername().equals(username)) {
+        if (listing.getLandlord().getUsername().equals(username)) {
             throw new BadRequestException("You cannot leave a review on your own listing");
         }
 
-        if(!bookingRepository.existsByListingAndTenantAndStatus(listing, critic, BookingStatus.FINISHED)) {
+        if (!bookingRepository.existsByListingAndTenantAndStatus(listing, critic, BookingStatus.FINISHED)) {
             throw new BadRequestException("You cannot leave a review for a listing that you have not rented");
         }
     }
 
     private static void validateUpdatingReview(UpdateReviewDto updateReviewDto, String username, ReviewEntity review) {
-        if(!review.getTenant().getUsername().equals(username)) {
+        if (!review.getTenant().getUsername().equals(username)) {
             throw new BadRequestException("You are not authorized to edit this review");
         }
 
-        if(updateReviewDto.getRating() != null) {
+        if (updateReviewDto.getRating() != null) {
             review.setRating(updateReviewDto.getRating());
         }
 
-        if(updateReviewDto.getComment() != null && !updateReviewDto.getComment().isEmpty()) {
+        if (updateReviewDto.getComment() != null && !updateReviewDto.getComment().isEmpty()) {
             review.setComment(updateReviewDto.getComment());
         }
     }

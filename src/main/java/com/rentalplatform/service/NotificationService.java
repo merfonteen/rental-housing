@@ -20,6 +20,16 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationDtoFactory notificationDtoFactory;
 
+    public void createNotification(String message, UserEntity user) {
+        NotificationEntity notification = NotificationEntity.builder()
+                .message(message)
+                .user(user)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
     public List<NotificationDto> getUnreadNotifications(String username) {
         UserEntity currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
@@ -39,6 +49,6 @@ public class NotificationService {
         NotificationEntity notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotFoundException("Notification with id '%d' not found"
                         .formatted(notificationId)));
-        notification.setIsRead(true);
+        notification.setRead(true);
     }
 }
