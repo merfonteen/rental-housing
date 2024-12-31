@@ -21,12 +21,12 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
 public class BookingService {
 
+    private final EmailService emailService;
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final BookingRepository bookingRepository;
@@ -64,6 +64,10 @@ public class BookingService {
 
         BookingEntity savedBooking = bookingRepository.save(booking);
 
+        emailService.sendEmail(listingToBook.getLandlord().getEmail(),
+                "New Booking Request",
+                "A new booking request has been made for your listing '%s'".formatted(listingToBook.getTitle()));
+
         return bookingDtoFactory.makeBookingDto(savedBooking);
     }
 
@@ -81,6 +85,10 @@ public class BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
 
+        emailService.sendEmail(booking.getTenant().getEmail(),
+                "Booking Confirmed",
+                "Your booking for listing '%s' has been confirmed".formatted(booking.getListing().getTitle()));
+
         return true;
     }
 
@@ -97,6 +105,10 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
+        emailService.sendEmail(booking.getListing().getLandlord().getEmail(),
+                "Booking Canceled",
+                "User has been canceled the booking for listing '%s'".formatted(booking.getListing().getTitle()));
+
         return true;
     }
 
@@ -111,6 +123,10 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
 
         bookingRepository.save(booking);
+
+        emailService.sendEmail(booking.getTenant().getEmail(),
+                "Booking Declined",
+                "The landlord has declined your booking '%s'".formatted(booking.getListing().getTitle()));
 
         return true;
     }

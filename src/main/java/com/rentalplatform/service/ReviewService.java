@@ -20,12 +20,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @RequiredArgsConstructor
 @Service
 public class ReviewService {
 
+    private final EmailService emailService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewDtoFactory reviewDtoFactory;
@@ -62,6 +61,11 @@ public class ReviewService {
                 .build();
 
         ReviewEntity savedReview = reviewRepository.save(review);
+
+        emailService.sendEmail(listing.getLandlord().getEmail(),
+                "New Review Received",
+                "Your listing '%s' has received a new review from %s.\n Comment: %s"
+                        .formatted(listing.getTitle(), review.getTenant(), review.getComment()));
 
         return reviewDtoFactory.makeReviewDto(savedReview);
     }

@@ -12,6 +12,16 @@ spring:
       ddl-auto: update
     properties:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "your_email@gmail.com"
+    password: "your_password"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
 
 jwt:
   secret: 8kuunS6IaBPePyisBoTl9Qa3uQbuEM3+szIgYQyijBrwQxTuuKfDdaM00sa+raqlgKkCJ1J6mJB3kfC6XXJI4g==

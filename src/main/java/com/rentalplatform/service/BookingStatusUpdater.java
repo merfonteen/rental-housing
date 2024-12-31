@@ -14,6 +14,7 @@ import java.util.List;
 @Component
 public class BookingStatusUpdater {
 
+    private final EmailService emailService;
     private final BookingRepository bookingRepository;
 
     @Scheduled(cron = "0 0 0 * * ?")
@@ -23,6 +24,9 @@ public class BookingStatusUpdater {
 
         for(BookingEntity booking : bookings) {
             booking.setStatus(BookingStatus.FINISHED);
+            emailService.sendEmail(booking.getTenant().getEmail(),
+                    "Booking Finished",
+                    "Your booking '%s' has been finished".formatted(booking.getListing().getTitle()));
         }
     }
 }
