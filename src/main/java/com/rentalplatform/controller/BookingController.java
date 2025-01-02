@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -32,6 +33,7 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getBookings(principal.getName(), page, size));
     }
 
+    @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @GetMapping(BOOKINGS_FOR_LANDLORD)
     public ResponseEntity<Page<BookingDto>> getBookingsForLandlord(Principal principal,
                                                                    @RequestParam(defaultValue = "0") int page,
@@ -45,16 +47,19 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.createBooking(bookingDto, principal.getName()));
     }
 
+    @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @PostMapping(CONFIRM_BY_ID)
     public ResponseEntity<Boolean> confirmBooking(@PathVariable Long bookingId, Principal principal) {
         return ResponseEntity.ok(bookingService.confirmBookingByLandlord(bookingId, principal.getName()));
     }
 
+    @PreAuthorize("hasRole('ROLE_TENANT')")
     @PatchMapping(CANCEL_BY_ID)
     public ResponseEntity<Boolean> cancelBooking(@PathVariable Long bookingId, Principal principal) {
         return ResponseEntity.ok(bookingService.cancelBookingByTenant(bookingId, principal.getName()));
     }
 
+    @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @PatchMapping(DECLINE_BY_ID)
     public ResponseEntity<Boolean> declineBooking(@PathVariable Long bookingId, Principal principal) {
         return ResponseEntity.ok(bookingService.declineBookingByLandlord(bookingId, principal.getName()));
