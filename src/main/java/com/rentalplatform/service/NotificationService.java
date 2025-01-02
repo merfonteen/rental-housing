@@ -1,5 +1,6 @@
 package com.rentalplatform.service;
 
+import com.rentalplatform.controller.NotificationWebSocketController;
 import com.rentalplatform.dto.NotificationDto;
 import com.rentalplatform.entity.NotificationEntity;
 import com.rentalplatform.entity.UserEntity;
@@ -19,6 +20,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationDtoFactory notificationDtoFactory;
+    private final NotificationWebSocketController notificationWebSocketController;
 
     public void createNotification(String message, UserEntity user) {
         NotificationEntity notification = NotificationEntity.builder()
@@ -28,6 +30,7 @@ public class NotificationService {
                 .build();
 
         notificationRepository.save(notification);
+        notificationWebSocketController.sendNotification(user.getUsername(), message);
     }
 
     public List<NotificationDto> getUnreadNotifications(String username) {

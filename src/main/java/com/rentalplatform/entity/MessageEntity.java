@@ -11,20 +11,25 @@ import java.time.Instant;
 @Setter
 @Builder
 @Entity
-@Table(name = "notifications")
-public class NotificationEntity {
+@Table(name = "messages")
+public class MessageEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String message;
-
-    @Column(name = "is_read")
-    private boolean isRead;
+    private String content;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private UserEntity user;
+    @JoinColumn(name = "sender_id")
+    private UserEntity sender;
+
+    @ManyToOne
+    @JoinColumn(name = "receiver_id")
+    private UserEntity receiver;
+
+    @Builder.Default
+    @Column(name = "is_read")
+    private boolean isRead = false;
 
     @Builder.Default
     @Column(name = "created_at")

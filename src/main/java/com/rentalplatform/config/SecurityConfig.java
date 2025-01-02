@@ -1,5 +1,6 @@
-package com.rentalplatform.security;
+package com.rentalplatform.config;
 
+import com.rentalplatform.security.JwtRequestFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
