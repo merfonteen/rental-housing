@@ -4,7 +4,9 @@ import com.rentalplatform.dto.CreationListingDto;
 import com.rentalplatform.dto.EditListingDto;
 import com.rentalplatform.dto.FilterListingsDto;
 import com.rentalplatform.dto.ListingDto;
+import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.ListingEntity;
+import com.rentalplatform.entity.ReviewEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
@@ -12,12 +14,16 @@ import com.rentalplatform.factory.ListingDtoFactory;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,6 +77,21 @@ public class ListingService {
 
             if(filter.getType() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("type"), filter.getType()));
+            }
+
+            if (filter.getMinAverageRating() != null) {
+                Subquery<Double> averageRatingSubquery = query.subquery(Double.class);
+                Root<ReviewEntity> reviewRoot = averageRatingSubquery.from(ReviewEntity.class);
+                averageRatingSubquery.select(criteriaBuilder.avg(reviewRoot.get("rating")))
+                        .where(criteriaBuilder.equal(reviewRoot.get("listing"), root));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(averageRatingSubquery, filter.getMinAverageRating()));
+            }
+
+            if(filter.getAvailableFrom() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("nextAvailableDate"),
+                        filter.getAvailableFrom()
+                ));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

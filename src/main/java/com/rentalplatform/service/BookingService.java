@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -59,6 +62,8 @@ public class BookingService {
                 .endDate(endDateTime)
                 .status(BookingStatus.PENDING)
                 .build();
+
+        updateNextAvailableDate(listingToBook);
 
         BookingEntity savedBooking = bookingRepository.save(booking);
 
@@ -109,6 +114,9 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+
+        updateNextAvailableDate(booking.getListing());
+
         bookingRepository.save(booking);
 
         emailService.sendEmail(booking.getListing().getLandlord().getEmail(),
@@ -143,6 +151,17 @@ public class BookingService {
                 booking.getTenant());
 
         return true;
+    }
+
+    private void updateNextAvailableDate(ListingEntity listing) {
+        Optional<Instant> maxEndDate = bookingRepository.findMaxEndDateByListingIdAndStatus(
+                listing.getId(),
+                BookingStatus.CONFIRMED);
+        if(maxEndDate.isPresent()) {
+            listing.setNextAvailableDate(maxEndDate.get().plusSeconds(3600));
+        } else {
+            listing.setNextAvailableDate(Instant.now());
+        }
     }
 
     private void validateBookingStatus(BookingEntity booking, BookingStatus requiredStatus, String errorMessage) {

@@ -11,8 +11,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.awt.print.Book;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
@@ -22,6 +24,10 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
     @Query("SELECT b FROM BookingEntity b WHERE b.listing.landlord.username = :username")
     Page<BookingEntity> findAllByListingLandlordUsername(@Param("username") String username, Pageable pageable);
+
+    @Query("SELECT MAX(b.endDate) FROM BookingEntity b WHERE b.listing.id = :listingId AND b.status = :status")
+    Optional<Instant> findMaxEndDateByListingIdAndStatus(@Param("listingId")Long listingId,
+                                                               @Param("status") BookingStatus status);
 
     List<BookingEntity> findAllByStatusAndEndDateBefore(BookingStatus status, Instant now);
 
