@@ -20,5 +20,7 @@ public class ListingDto {
     private String ownerUsername;
     @JsonProperty("created_at")
     private Instant createdAt;
+    @JsonProperty("next_available_date_for_booking")
+    private Instant nextAvailableDateForBooking;
     private List<ReviewDto> reviews;
 }

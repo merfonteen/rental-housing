@@ -57,6 +57,9 @@ public class ListingEntity {
     @Builder.Default
     private Instant createdAt = Instant.now();
 
+    @Column(name = "next_available_date")
+    private Instant nextAvailableDate;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

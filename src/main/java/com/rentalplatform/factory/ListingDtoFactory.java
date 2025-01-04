@@ -29,6 +29,7 @@ public class ListingDtoFactory {
                 .type(listing.getType())
                 .ownerUsername(listing.getLandlord().getUsername())
                 .createdAt(listing.getCreatedAt())
+                .nextAvailableDateForBooking(listing.getNextAvailableDate())
                 .build();
     }
 
@@ -47,6 +48,7 @@ public class ListingDtoFactory {
                 .type(listing.getType())
                 .ownerUsername(listing.getLandlord().getUsername())
                 .createdAt(listing.getCreatedAt())
+                .nextAvailableDateForBooking(listing.getNextAvailableDate())
                 .reviews(
                         listing.getReviews()
                                 .stream()
