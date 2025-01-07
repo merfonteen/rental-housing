@@ -25,6 +25,8 @@ public class ListingController {
     public static final String MY_LISTINGS = "/my-listings";
     public static final String ALL_LISTINGS = "/all-listings";
     public static final String LISTING_BY_ID = "/{id}";
+    //add to favorites
+    //get favorites listings
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @GetMapping(MY_LISTINGS)

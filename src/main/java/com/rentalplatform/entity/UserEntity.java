@@ -39,7 +39,7 @@ public class UserEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "landlord", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ListingEntity> listings = new ArrayList<>();
+    private List<ListingEntity> ownListings = new ArrayList<>();
 
     @Builder.Default
     @Column(name = "created_at")
