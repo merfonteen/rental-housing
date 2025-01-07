@@ -4,6 +4,7 @@ import com.rentalplatform.dto.CreationListingDto;
 import com.rentalplatform.dto.EditListingDto;
 import com.rentalplatform.dto.FilterListingsDto;
 import com.rentalplatform.dto.ListingDto;
+import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.entity.ReviewEntity;
 import com.rentalplatform.entity.UserEntity;
@@ -21,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
