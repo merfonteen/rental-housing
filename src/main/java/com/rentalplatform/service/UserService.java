@@ -25,11 +25,12 @@ import java.util.List;
 @Service
 public class UserService {
 
+    private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserDtoFactory userDtoFactory;
-    private final JwtTokenUtil jwtTokenUtil;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
     private final AuthenticationManager authenticationManager;
 
     @Transactional
@@ -69,7 +70,8 @@ public class UserService {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
             return TokenResponse.builder()
-                    .token(jwtTokenUtil.generateToken(userDetails))
+                    .accessToken(jwtTokenUtil.generateToken(userDetails))
+                    .refreshToken(refreshTokenService.createRefreshToken(authentication.getName()).getToken())
                     .build();
         } catch (BadCredentialsException e) {
             throw new BadRequestException("Invalid password or email");
