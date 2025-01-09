@@ -3,11 +3,11 @@ package com.rentalplatform.controller;
 import com.rentalplatform.dto.NotificationDto;
 import com.rentalplatform.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
@@ -17,13 +17,17 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping("/unread")
-    public ResponseEntity<List<NotificationDto>> getUnreadNotifications(Principal principal) {
-        return ResponseEntity.ok(notificationService.getUnreadNotifications(principal.getName()));
+    public ResponseEntity<Page<NotificationDto>> getUnreadNotifications(Principal principal,
+                                                                        @RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(notificationService.getUnreadNotifications(principal.getName(), page, size));
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationDto>> getAllNotifications(Principal principal) {
-        return ResponseEntity.ok(notificationService.getAllNotifications(principal.getName()));
+    public ResponseEntity<Page<NotificationDto>> getAllNotifications(Principal principal,
+                                                                     @RequestParam(defaultValue = "0") int page,
+                                                                     @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(notificationService.getAllNotifications(principal.getName(), page, size));
     }
 
     @PatchMapping("/read/{id}")
