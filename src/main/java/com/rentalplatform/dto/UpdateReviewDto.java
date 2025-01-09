@@ -11,7 +11,7 @@ import lombok.Data;
 public class UpdateReviewDto {
     @Min(1)
     @Max(10)
-    private Integer rating;
+    private Double rating;
 
     @Size(max = 500, message = "Comment cannot exceed 500 characters")
     private String comment;

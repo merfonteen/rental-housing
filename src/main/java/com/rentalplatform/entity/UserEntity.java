@@ -28,6 +28,8 @@ public class UserEntity {
 
     private String password;
 
+    private Double rating;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

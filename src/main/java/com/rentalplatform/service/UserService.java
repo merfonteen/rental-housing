@@ -1,18 +1,16 @@
 package com.rentalplatform.service;
 
 import com.rentalplatform.dto.*;
+import com.rentalplatform.entity.RoleEntity;
+import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.UserDtoFactory;
-import com.rentalplatform.security.JwtTokenUtil;
-import com.rentalplatform.entity.RoleEntity;
-import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.repository.RoleRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.security.JwtTokenUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.weaver.ast.Not;
-import org.hibernate.sql.Delete;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -56,7 +54,7 @@ public class UserService {
 
         UserEntity savedUser = userRepository.save(user);
 
-        return userDtoFactory.makeUserDto(savedUser);
+        return userDtoFactory.makeUserDto(savedUser, false);
     }
 
     public TokenResponse signIn(LoginDto loginDto) {
@@ -80,7 +78,7 @@ public class UserService {
 
     public UserDto getProfileInfo(String username) {
         UserEntity currentUser = getCurrentUser(username);
-        return userDtoFactory.makeUserDto(currentUser);
+        return userDtoFactory.makeUserDto(currentUser, true);
     }
 
     @Transactional
@@ -93,7 +91,7 @@ public class UserService {
 
         UserEntity savedUser = userRepository.save(user);
 
-        return userDtoFactory.makeUserDto(savedUser);
+        return userDtoFactory.makeUserDto(savedUser, false);
     }
 
     @Transactional
@@ -126,7 +124,7 @@ public class UserService {
 
         userRepository.save(currentUser);
 
-        return userDtoFactory.makeUserDto(currentUser);
+        return userDtoFactory.makeUserDto(currentUser, false);
     }
 
     @Transactional

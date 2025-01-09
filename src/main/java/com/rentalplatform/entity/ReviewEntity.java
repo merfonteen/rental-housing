@@ -29,7 +29,7 @@ public class ReviewEntity {
     @JoinColumn(name = "tenant_id")
     private UserEntity tenant;
 
-    private Integer rating;
+    private Double rating;
 
     private String comment;
 

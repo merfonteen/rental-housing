@@ -9,11 +9,12 @@ import java.util.stream.Collectors;
 
 @Component
 public class UserDtoFactory {
-    public UserDto makeUserDto(UserEntity user) {
+    public UserDto makeUserDto(UserEntity user, boolean includeRating) {
         return UserDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .rating(includeRating ? user.getRating() : null)
                 .roles(user.getRoles().stream().map(RoleEntity::getName).collect(Collectors.toList()))
                 .build();
     }

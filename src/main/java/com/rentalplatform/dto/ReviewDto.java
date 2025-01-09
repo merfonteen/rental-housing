@@ -11,7 +11,7 @@ public class ReviewDto {
     private Long id;
     private String listingTitle;
     private String criticUsername;
-    private Integer rating;
+    private Double rating;
     private String comment;
     private Instant createdAt;
 }

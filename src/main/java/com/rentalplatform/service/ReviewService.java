@@ -21,13 +21,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReviewService {
 
+    private final EmailService emailService;
+    private final RatingService ratingService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewDtoFactory reviewDtoFactory;
     private final BookingRepository bookingRepository;
     private final ListingRepository listingRepository;
     private final NotificationService notificationService;
-    private final EmailService emailService;
 
     public Page<ReviewDto> getReviewsForListing(Long listingId, int page, int size) {
         listingRepository.findById(listingId).orElseThrow(
@@ -60,6 +61,8 @@ public class ReviewService {
 
         ReviewEntity savedReview = reviewRepository.save(review);
 
+        ratingService.updateLandlordRating(listing.getLandlord().getId());
+
         emailService.sendEmail(listing.getLandlord().getEmail(),
                 "New Review Received",
                 "Your listing '%s' has received a new review from %s.\n Comment: %s"
@@ -80,6 +83,7 @@ public class ReviewService {
         validateUpdatingReview(updateReviewDto, username, review);
 
         ReviewEntity savedReview = reviewRepository.save(review);
+        ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return reviewDtoFactory.makeReviewDto(savedReview);
     }
 
@@ -93,6 +97,7 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+        ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return true;
     }
 
