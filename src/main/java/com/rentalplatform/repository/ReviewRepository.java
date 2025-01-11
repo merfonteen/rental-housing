@@ -18,4 +18,6 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 
     @Query("SELECT AVG(r.rating) FROM ReviewEntity r WHERE r.listing.landlord.id = :landlordId")
     Double findAverageRatingForLandlord(@Param("landlordId") Long landlordId);
+
+
 }

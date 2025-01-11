@@ -14,8 +14,12 @@ import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -30,7 +34,8 @@ public class ReviewService {
     private final ListingRepository listingRepository;
     private final NotificationService notificationService;
 
-    public Page<ReviewDto> getReviewsForListing(Long listingId, int page, int size) {
+    public Page<ReviewDto> getReviewsForListing(Long listingId, boolean sortByDate, boolean sortByRating,
+                                                int page, int size) {
         listingRepository.findById(listingId).orElseThrow(
                 () -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
 
@@ -40,6 +45,13 @@ public class ReviewService {
 
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<ReviewEntity> reviews = reviewRepository.findAllByListingId(listingId, pageRequest);
+
+       Comparator<ReviewEntity> comparator = determineComparator(sortByDate, sortByRating);
+
+       if(comparator != null) {
+           return sortByComparator(reviews, comparator, pageRequest).map(reviewDtoFactory::makeReviewDto);
+       }
+
         return reviews.map(reviewDtoFactory::makeReviewDto);
     }
 
@@ -99,6 +111,28 @@ public class ReviewService {
         reviewRepository.delete(review);
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return true;
+    }
+
+    private Comparator<ReviewEntity> determineComparator(boolean sortByDate, boolean sortByRating) {
+        if(sortByDate && sortByRating) {
+            return Comparator.comparing(ReviewEntity::getCreatedAt).thenComparing(ReviewEntity::getRating);
+        }
+        else if(sortByDate) {
+            return Comparator.comparing(ReviewEntity::getCreatedAt);
+        }
+        else if(sortByRating) {
+            return Comparator.comparing(ReviewEntity::getRating);
+        }
+        return null;
+    }
+
+    private Page<ReviewEntity> sortByComparator(Page<ReviewEntity> reviews,
+                                                Comparator<ReviewEntity> comparator,
+                                                PageRequest pageRequest) {
+        List<ReviewEntity> sortedReviews = reviews.stream()
+                .sorted(comparator)
+                .toList();
+        return new PageImpl<>(sortedReviews, pageRequest, reviews.getTotalElements());
     }
 
     private ListingEntity findListingById(Long listingId) {

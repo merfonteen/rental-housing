@@ -22,9 +22,11 @@ public class ReviewController {
 
     @GetMapping("/listing/{listingId}")
     public ResponseEntity<Page<ReviewDto>> getReviewsForListing(@PathVariable Long listingId,
+                                                                @RequestParam(required = false) boolean sortByDate,
+                                                                @RequestParam(required = false) boolean sortByRating,
                                                                 @RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(reviewService.getReviewsForListing(listingId, page, size));
+        return ResponseEntity.ok(reviewService.getReviewsForListing(listingId, sortByDate, sortByRating, page, size));
     }
 
     @PostMapping
