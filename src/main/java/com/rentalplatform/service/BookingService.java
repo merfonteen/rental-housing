@@ -2,15 +2,20 @@ package com.rentalplatform.service;
 
 import com.rentalplatform.dto.BookingDto;
 import com.rentalplatform.dto.CreationBookingDto;
-import com.rentalplatform.entity.*;
+import com.rentalplatform.entity.BookingEntity;
+import com.rentalplatform.entity.BookingStatus;
+import com.rentalplatform.entity.ListingEntity;
+import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.BookingDtoFactory;
 import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -18,8 +23,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -32,20 +35,22 @@ public class BookingService {
     private final BookingDtoFactory bookingDtoFactory;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final RedisCacheCleaner redisCacheCleaner;
 
+    @Cacheable(cacheNames = "bookings", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookings(String username, int page, int size) {
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByTenantUsernameOrLandlordUsername(username, request);
         return bookings.map(bookingDtoFactory::makeBookingDto);
     }
 
+    @Cacheable(cacheNames = "bookingsForLandlord", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookingsForLandlord(String username, int page, int size) {
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByListingLandlordUsername(username, request);
         return bookings.map(bookingDtoFactory::makeBookingDto);
     }
 
-    @Transactional
     public BookingDto createBooking(CreationBookingDto bookingDto, String username) {
         Instant startDateTime = bookingDto.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endDateTime = bookingDto.getEndDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -66,6 +71,9 @@ public class BookingService {
         updateNextAvailableDate(listingToBook);
 
         BookingEntity savedBooking = bookingRepository.save(booking);
+
+        redisCacheCleaner.evictBookingCacheForUser(username);
+        redisCacheCleaner.evictBookingCacheForLandlord(listingToBook.getLandlord().getUsername());
 
         emailService.sendEmail(listingToBook.getLandlord().getEmail(),
                 "New Booking Request",
@@ -91,6 +99,9 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
+
+        redisCacheCleaner.evictBookingCacheForUser(username);
+        redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
         emailService.sendEmail(booking.getTenant().getEmail(),
                 "Booking Confirmed",
@@ -119,6 +130,9 @@ public class BookingService {
 
         bookingRepository.save(booking);
 
+        redisCacheCleaner.evictBookingCacheForUser(username);
+        redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
+
         emailService.sendEmail(booking.getListing().getLandlord().getEmail(),
                 "Booking Canceled",
                 "User has been canceled the booking for listing '%s'".formatted(booking.getListing().getTitle()));
@@ -141,6 +155,9 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
 
         bookingRepository.save(booking);
+
+        redisCacheCleaner.evictBookingCacheForUser(username);
+        redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
         emailService.sendEmail(booking.getTenant().getEmail(),
                 "Booking Declined",

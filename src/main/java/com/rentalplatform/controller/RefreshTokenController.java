@@ -2,7 +2,7 @@ package com.rentalplatform.controller;
 
 import com.rentalplatform.dto.TokenResponse;
 import com.rentalplatform.security.JwtTokenUtil;
-import com.rentalplatform.service.CustomUserDetailService;
+import com.rentalplatform.security.CustomUserDetailService;
 import com.rentalplatform.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

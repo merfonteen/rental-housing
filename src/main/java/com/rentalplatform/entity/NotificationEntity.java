@@ -3,6 +3,7 @@ package com.rentalplatform.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 @AllArgsConstructor
@@ -12,7 +13,7 @@ import java.time.Instant;
 @Builder
 @Entity
 @Table(name = "notifications")
-public class NotificationEntity {
+public class NotificationEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

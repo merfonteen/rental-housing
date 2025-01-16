@@ -3,6 +3,7 @@ package com.rentalplatform.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ import java.util.Objects;
 @Builder
 @Entity
 @Table(name = "bookings")
-public class BookingEntity {
+public class BookingEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

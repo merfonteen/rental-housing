@@ -13,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/listings")
@@ -22,19 +21,15 @@ public class ListingController {
 
     private final ListingService listingService;
 
-    public static final String MY_LISTINGS = "/my-listings";
-    public static final String ALL_LISTINGS = "/all-listings";
-    public static final String LISTING_BY_ID = "/{id}";
-
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
-    @GetMapping(MY_LISTINGS)
+    @GetMapping("/my-listings")
     public ResponseEntity<Page<ListingDto>> getListings(Principal principal,
                                                         @RequestParam(defaultValue = "0") int page,
                                                         @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(listingService.getMyListings(principal.getName(), page, size));
     }
 
-    @GetMapping(ALL_LISTINGS)
+    @GetMapping("/all-listings")
     public ResponseEntity<Page<ListingDto>> getAllListings(@Valid @ModelAttribute FilterListingsDto filterDto,
                                                            @RequestParam(defaultValue = "0") int page,
                                                            @RequestParam(defaultValue = "10") int size) {
@@ -49,7 +44,7 @@ public class ListingController {
     }
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
-    @PatchMapping(LISTING_BY_ID)
+    @PatchMapping("/{id}")
     public ResponseEntity<ListingDto> editListing(@PathVariable Long id,
                                                   @Valid @RequestBody EditListingDto editListingDto,
                                                   Principal principal) {
@@ -57,7 +52,7 @@ public class ListingController {
     }
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
-    @DeleteMapping(LISTING_BY_ID)
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteListing(@PathVariable Long id, Principal principal) {
         listingService.deleteListing(id, principal.getName());
         return ResponseEntity.ok("The listing has been successfully deleted");

@@ -6,12 +6,13 @@ import com.rentalplatform.entity.ReviewEntity;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
 @Builder
 @Data
-public class ListingDto {
+public class ListingDto implements Serializable {
     private Long id;
     private String title;
     private String description;

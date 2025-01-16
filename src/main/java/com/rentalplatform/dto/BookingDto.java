@@ -5,11 +5,13 @@ import com.rentalplatform.service.BookingService;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Builder
 @Data
-public class BookingDto {
+public class BookingDto implements Serializable {
     private Long id;
     private String listingTitle;
     private String tenantUsername;

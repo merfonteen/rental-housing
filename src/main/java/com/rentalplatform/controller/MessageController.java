@@ -22,6 +22,11 @@ public class MessageController {
         return ResponseEntity.ok(messageService.getConversation(receiverUsername, principal.getName()));
     }
 
+    @GetMapping
+    public ResponseEntity<List<MessageDto>> getAllMessages(Principal principal) {
+        return ResponseEntity.ok(messageService.getAllMessages(principal.getName()));
+    }
+
     @GetMapping("/unread")
     public ResponseEntity<List<MessageDto>> getUnreadMessages(Principal principal) {
         return ResponseEntity.ok(messageService.getUnreadMessages(principal.getName()));

@@ -4,28 +4,20 @@ import com.rentalplatform.dto.CreationListingDto;
 import com.rentalplatform.dto.EditListingDto;
 import com.rentalplatform.dto.FilterListingsDto;
 import com.rentalplatform.dto.ListingDto;
-import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.ListingEntity;
-import com.rentalplatform.entity.ReviewEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.ListingDtoFactory;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
+import com.rentalplatform.utils.ListingSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -52,50 +44,21 @@ public class ListingService {
     public Page<ListingDto> getAllListings(FilterListingsDto filter, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<ListingEntity> listings = listingRepository.findAll((root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        if(size > 50) {
+            throw new BadRequestException("Maximum page size is 50");
+        }
 
-            if(filter.getTitle() != null && !filter.getTitle().isEmpty()) {
-                predicates.add(criteriaBuilder.like(root.get("title"), "%" + filter.getTitle() + "%"));
-            }
+        Specification<ListingEntity> specification = Specification
+                .where(ListingSpecification.hasTitle(filter.getTitle()))
+                .and(ListingSpecification.hasAddress(filter.getAddress()))
+                .and(ListingSpecification.hasMinPrice(filter.getMinPrice()))
+                .and(ListingSpecification.hasMaxPrice(filter.getMaxPrice()))
+                .and(ListingSpecification.hasNumberOfRooms(filter.getNumberOfRooms()))
+                .and(ListingSpecification.hasType(filter.getType()))
+                .and(ListingSpecification.hasMinAverageRating(filter.getMinAverageRating()))
+                .and(ListingSpecification.hasAvailableFrom(filter.getAvailableFrom()));
 
-            if(filter.getAddress() != null && !filter.getAddress().isEmpty()) {
-                predicates.add(criteriaBuilder.like(root.get("address"), "%" + filter.getAddress() + "%"));
-            }
-
-            if(filter.getMinPrice() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("price"), filter.getMinPrice()));
-            }
-
-            if(filter.getMaxPrice() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("price"), filter.getMinPrice()));
-            }
-
-            if(filter.getNumberOfRooms() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("numberOfRooms"), filter.getNumberOfRooms()));
-            }
-
-            if(filter.getType() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("type"), filter.getType()));
-            }
-
-            if (filter.getMinAverageRating() != null) {
-                Subquery<Double> averageRatingSubquery = query.subquery(Double.class);
-                Root<ReviewEntity> reviewRoot = averageRatingSubquery.from(ReviewEntity.class);
-                averageRatingSubquery.select(criteriaBuilder.avg(reviewRoot.get("rating")))
-                        .where(criteriaBuilder.equal(reviewRoot.get("listing"), root));
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(averageRatingSubquery, filter.getMinAverageRating()));
-            }
-
-            if(filter.getAvailableFrom() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
-                        root.get("nextAvailableDate"),
-                        filter.getAvailableFrom()
-                ));
-            }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        }, pageRequest);
+        Page<ListingEntity> listings = listingRepository.findAll(specification, pageRequest);
 
         return listings.map(listingDtoFactory::makeListingDtoWithReviews);
     }

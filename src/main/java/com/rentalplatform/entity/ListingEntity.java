@@ -3,6 +3,7 @@ package com.rentalplatform.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.Objects;
                 @Index(name = "idx_listing_type", columnList = "type"),
                 @Index(name = "idx_listing_landlord_id", columnList = "landlord_id")
         })
-public class ListingEntity {
+public class ListingEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

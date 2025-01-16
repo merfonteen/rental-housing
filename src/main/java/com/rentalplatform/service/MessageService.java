@@ -11,6 +11,9 @@ import com.rentalplatform.repository.MessageRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,11 +35,22 @@ public class MessageService {
                 messageRepository.findAllBySenderIdAndReceiverId(sender.getId(), receiver.getId()));
     }
 
+    @Cacheable(cacheNames = "messages", key = "#username")
+    public List<MessageDto> getAllMessages(String username) {
+        findByUsername(username);
+        return messageDtoFactory.makeMessageDto(messageRepository.findAllByUsername(username));
+    }
+
+    @Cacheable(cacheNames = "unreadMessages", key = "#username")
     public List<MessageDto> getUnreadMessages(String username) {
         UserEntity user = findByUsername(username);
         return messageDtoFactory.makeMessageDto(messageRepository.findAllByReceiverIdAndIsReadFalse(user.getId()));
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "messages", key = "#senderUsername"),
+            @CacheEvict(cacheNames = "unreadMessages", key = "#receiverUsername")
+    })
     @Transactional
     public void sendMessage(String receiverUsername, String content, String senderUsername) {
         UserEntity receiver = findByUsername(receiverUsername);
@@ -52,6 +66,7 @@ public class MessageService {
         messageWebSocketController.sendNotification(receiverUsername, content);
     }
 
+    @CacheEvict(cacheNames = "unreadMessages", key = "#username")
     @Transactional
     public MessageDto markAsRead(Long messageId, String username) {
         MessageEntity message = messageRepository.findById(messageId)

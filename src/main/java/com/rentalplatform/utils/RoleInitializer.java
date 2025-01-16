@@ -1,4 +1,4 @@
-package com.rentalplatform.security;
+package com.rentalplatform.utils;
 
 import com.rentalplatform.entity.RoleEntity;
 import com.rentalplatform.repository.RoleRepository;

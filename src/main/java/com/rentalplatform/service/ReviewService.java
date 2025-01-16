@@ -3,7 +3,10 @@ package com.rentalplatform.service;
 import com.rentalplatform.dto.CreationReviewDto;
 import com.rentalplatform.dto.ReviewDto;
 import com.rentalplatform.dto.UpdateReviewDto;
-import com.rentalplatform.entity.*;
+import com.rentalplatform.entity.BookingStatus;
+import com.rentalplatform.entity.ListingEntity;
+import com.rentalplatform.entity.ReviewEntity;
+import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.factory.ReviewDtoFactory;
@@ -11,8 +14,10 @@ import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.ReviewRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +38,9 @@ public class ReviewService {
     private final BookingRepository bookingRepository;
     private final ListingRepository listingRepository;
     private final NotificationService notificationService;
+    private final RedisCacheCleaner redisCacheCleaner;
 
+    @Cacheable(value = "reviews", key = "#listingId + '-' + #sortByDate + '-' + #sortByRating + '-' + #page + '-' + #size")
     public Page<ReviewDto> getReviewsForListing(Long listingId, boolean sortByDate, boolean sortByRating,
                                                 int page, int size) {
         listingRepository.findById(listingId).orElseThrow(
@@ -75,6 +82,8 @@ public class ReviewService {
 
         ratingService.updateLandlordRating(listing.getLandlord().getId());
 
+        redisCacheCleaner.evictCacheForListing(creationReviewDto.getListingId());
+
         emailService.sendEmail(listing.getLandlord().getEmail(),
                 "New Review Received",
                 "Your listing '%s' has received a new review from %s.\n Comment: %s"
@@ -95,6 +104,9 @@ public class ReviewService {
         validateUpdatingReview(updateReviewDto, username, review);
 
         ReviewEntity savedReview = reviewRepository.save(review);
+
+        redisCacheCleaner.evictCacheForListing(review.getListing().getId());
+
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return reviewDtoFactory.makeReviewDto(savedReview);
     }
@@ -109,6 +121,9 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+
+        redisCacheCleaner.evictCacheForListing(review.getListing().getId());
+
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return true;
     }

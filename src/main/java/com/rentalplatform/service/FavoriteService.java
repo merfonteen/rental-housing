@@ -12,6 +12,8 @@ import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +27,7 @@ public class FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final ListingDtoFactory listingDtoFactory;
 
+    @Cacheable(cacheNames = "favoriteListings", key = "#username")
     public List<ListingDto> getFavoriteListings(String username) {
         UserEntity user = getUser(username);
 
@@ -37,6 +40,7 @@ public class FavoriteService {
         return listingDtoFactory.makeListingDto(listings);
     }
 
+    @CacheEvict(cacheNames = "favoriteListings", key = "#username")
     @Transactional
     public ListingDto addToFavorites(Long listingId, String username) {
         ListingEntity listingToAdd = getListing(listingId);
@@ -57,6 +61,7 @@ public class FavoriteService {
         return listingDtoFactory.makeListingDto(listingToAdd);
     }
 
+    @CacheEvict(cacheNames = "favoriteListings", key = "#username")
     @Transactional
     public void removeFromFavorites(Long listingId, String username) {
         UserEntity user = getUser(username);

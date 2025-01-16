@@ -1,4 +1,4 @@
-package com.rentalplatform.service;
+package com.rentalplatform.security;
 
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.repository.UserRepository;

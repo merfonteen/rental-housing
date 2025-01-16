@@ -12,6 +12,12 @@ spring:
       ddl-auto: update
     properties:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
   mail:
     host: smtp.gmail.com
     port: 587
@@ -22,7 +28,6 @@ spring:
         smtp:
           auth: true
           starttls.enable: true
-
 jwt:
   secret: 8kuunS6IaBPePyisBoTl9Qa3uQbuEM3+szIgYQyijBrwQxTuuKfDdaM00sa+raqlgKkCJ1J6mJB3kfC6XXJI4g==
   expiration: 900000
