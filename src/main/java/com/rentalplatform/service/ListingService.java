@@ -27,6 +27,12 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final ListingDtoFactory listingDtoFactory;
 
+    public ListingDto getListingById(Long listingId) {
+        ListingEntity listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
+        return listingDtoFactory.makeListingDto(listing);
+    }
+
     public Page<ListingDto> getMyListings(String currentUsername, int page, int size) {
         UserEntity landlord = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new BadRequestException("User '%s' not found".formatted(currentUsername)));

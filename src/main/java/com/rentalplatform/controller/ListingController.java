@@ -21,6 +21,11 @@ public class ListingController {
 
     private final ListingService listingService;
 
+    @GetMapping("/{listingId}")
+    public ResponseEntity<ListingDto> getListing(@PathVariable Long listingId) {
+        return ResponseEntity.ok(listingService.getListingById(listingId));
+    }
+
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @GetMapping("/my-listings")
     public ResponseEntity<Page<ListingDto>> getListings(Principal principal,

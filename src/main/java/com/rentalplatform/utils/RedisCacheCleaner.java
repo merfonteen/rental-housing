@@ -13,7 +13,7 @@ public class RedisCacheCleaner {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public void evictCacheForListing(Long listingId) {
+    public void evictCacheForReviewByListingId(Long listingId) {
         evictCacheByPattern("reviews::" + listingId + "-*");
     }
 

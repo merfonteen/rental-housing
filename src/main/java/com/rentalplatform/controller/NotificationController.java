@@ -16,6 +16,11 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    @GetMapping("/{notificationId}")
+    public ResponseEntity<NotificationDto> getNotification(@PathVariable Long notificationId, Principal principal) {
+        return ResponseEntity.ok(notificationService.getNotificationById(notificationId, principal.getName()));
+    }
+
     @GetMapping("/unread")
     public ResponseEntity<Page<NotificationDto>> getUnreadNotifications(Principal principal,
                                                                         @RequestParam(defaultValue = "0") int page,

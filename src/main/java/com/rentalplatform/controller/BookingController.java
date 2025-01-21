@@ -26,6 +26,11 @@ public class BookingController {
     public static final String CANCEL_BY_ID = "/cancel/{bookingId}";
     public static final String DECLINE_BY_ID = "/decline/{bookingId}";
 
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<BookingDto> getBooking(@PathVariable Long bookingId, Principal principal) {
+        return ResponseEntity.ok(bookingService.getBookingById(bookingId, principal.getName()));
+    }
+
     @GetMapping(MY_BOOKINGS)
     public ResponseEntity<Page<BookingDto>> getBookings(Principal principal,
                                                         @RequestParam(defaultValue = "0") int page,

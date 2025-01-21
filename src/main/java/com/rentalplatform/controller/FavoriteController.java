@@ -16,6 +16,11 @@ public class FavoriteController {
 
     private final FavoriteService favoriteService;
 
+    @GetMapping("/{favoriteId}")
+    public ResponseEntity<ListingDto> getFavorite(@PathVariable Long favoriteId) {
+        return ResponseEntity.ok(favoriteService.getFavoriteById(favoriteId));
+    }
+
     @GetMapping
     public ResponseEntity<List<ListingDto>> getFavorites(Principal principal) {
         return ResponseEntity.ok(favoriteService.getFavoriteListings(principal.getName()));

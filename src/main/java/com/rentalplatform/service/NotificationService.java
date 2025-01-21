@@ -11,6 +11,7 @@ import com.rentalplatform.repository.NotificationRepository;
 import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,17 @@ public class NotificationService {
     private final NotificationDtoFactory notificationDtoFactory;
     private final RedisCacheCleaner redisCacheCleaner;
     private final NotificationWebSocketController notificationWebSocketController;
+
+    @Cacheable(cacheNames = "notifications", key = "#notificationId")
+    public NotificationDto getNotificationById(Long notificationId, String username) {
+        NotificationEntity notification = findNotificationById(notificationId);
+
+        if(!username.equals(notification.getUser().getUsername())) {
+            throw new BadRequestException("You are not authorized to view this notification");
+        }
+
+        return notificationDtoFactory.makeNotificationDto(notification);
+    }
 
     @Cacheable(cacheNames = "notifications", key = "#username + '_' + #page + '_' + #size")
     public Page<NotificationDto> getAllNotifications(String username, int page, int size) {
@@ -71,11 +83,15 @@ public class NotificationService {
         notificationWebSocketController.sendNotification(user.getUsername(), message);
     }
 
+    @CacheEvict(cacheNames = "notifications", key = "#notificationId")
     public void markAsRead(Long notificationId) {
-        NotificationEntity notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new NotFoundException("Notification with id '%d' not found"
-                        .formatted(notificationId)));
+        NotificationEntity notification = findNotificationById(notificationId);
         notification.setRead(true);
         redisCacheCleaner.evictCacheForNotification(notification.getUser().getUsername());
+    }
+
+    private NotificationEntity findNotificationById(Long notificationId) {
+        return notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotFoundException("Notification with id '%d' not found".formatted(notificationId)));
     }
 }

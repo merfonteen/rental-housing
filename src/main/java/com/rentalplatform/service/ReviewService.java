@@ -17,6 +17,7 @@ import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -40,7 +41,14 @@ public class ReviewService {
     private final NotificationService notificationService;
     private final RedisCacheCleaner redisCacheCleaner;
 
-    @Cacheable(value = "reviews", key = "#listingId + '-' + #sortByDate + '-' + #sortByRating + '-' + #page + '-' + #size")
+    @Cacheable(cacheNames = "reviews", key = "#reviewId")
+    public ReviewDto getReviewById(Long reviewId) {
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
+        return reviewDtoFactory.makeReviewDto(review);
+    }
+
+    @Cacheable(cacheNames = "reviews", key = "#listingId + '-' + #sortByDate + '-' + #sortByRating + '-' + #page + '-' + #size")
     public Page<ReviewDto> getReviewsForListing(Long listingId, boolean sortByDate, boolean sortByRating,
                                                 int page, int size) {
         listingRepository.findById(listingId).orElseThrow(
@@ -82,7 +90,7 @@ public class ReviewService {
 
         ratingService.updateLandlordRating(listing.getLandlord().getId());
 
-        redisCacheCleaner.evictCacheForListing(creationReviewDto.getListingId());
+        redisCacheCleaner.evictCacheForReviewByListingId(creationReviewDto.getListingId());
 
         emailService.sendEmail(listing.getLandlord().getEmail(),
                 "New Review Received",
@@ -96,6 +104,7 @@ public class ReviewService {
         return reviewDtoFactory.makeReviewDto(savedReview);
     }
 
+    @CacheEvict(cacheNames = "reviews", key = "#reviewId")
     @Transactional
     public ReviewDto editReviewDto(Long reviewId, UpdateReviewDto updateReviewDto, String username) {
         ReviewEntity review = reviewRepository.findById(reviewId)
@@ -105,12 +114,13 @@ public class ReviewService {
 
         ReviewEntity savedReview = reviewRepository.save(review);
 
-        redisCacheCleaner.evictCacheForListing(review.getListing().getId());
+        redisCacheCleaner.evictCacheForReviewByListingId(review.getListing().getId());
 
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return reviewDtoFactory.makeReviewDto(savedReview);
     }
 
+    @CacheEvict(cacheNames = "reviews", key = "#reviewId")
     @Transactional
     public boolean deleteReview(Long reviewId, String username) {
         ReviewEntity review = reviewRepository.findById(reviewId)
@@ -122,7 +132,7 @@ public class ReviewService {
 
         reviewRepository.delete(review);
 
-        redisCacheCleaner.evictCacheForListing(review.getListing().getId());
+        redisCacheCleaner.evictCacheForReviewByListingId(review.getListing().getId());
 
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
         return true;

@@ -3,6 +3,7 @@ package com.rentalplatform.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -16,7 +17,7 @@ import java.util.Objects;
         indexes = {
                 @Index(name = "idx_review_rating", columnList = "rating")
         })
-public class ReviewEntity {
+public class ReviewEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

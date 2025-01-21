@@ -1,8 +1,9 @@
-package com.rentalplatform.service;
+package com.rentalplatform.utils;
 
 import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.BookingStatus;
 import com.rentalplatform.repository.BookingRepository;
+import com.rentalplatform.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

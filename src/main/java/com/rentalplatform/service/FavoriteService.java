@@ -1,6 +1,7 @@
 package com.rentalplatform.service;
 
 import com.rentalplatform.dto.ListingDto;
+import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.FavoriteEntity;
 import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.entity.UserEntity;
@@ -26,6 +27,12 @@ public class FavoriteService {
     private final ListingRepository listingRepository;
     private final FavoriteRepository favoriteRepository;
     private final ListingDtoFactory listingDtoFactory;
+
+    public ListingDto getFavoriteById(Long favoriteId) {
+        FavoriteEntity favorite = favoriteRepository.findById(favoriteId)
+                .orElseThrow(() -> new NotFoundException("Favorite listing with id '%d' not found".formatted(favoriteId)));
+        return listingDtoFactory.makeListingDto(favorite.getListing());
+    }
 
     @Cacheable(cacheNames = "favoriteListings", key = "#username")
     public List<ListingDto> getFavoriteListings(String username) {

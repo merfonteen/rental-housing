@@ -20,6 +20,11 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ReviewDto> getReview(@PathVariable Long reviewId) {
+        return ResponseEntity.ok(reviewService.getReviewById(reviewId));
+    }
+
     @GetMapping("/listing/{listingId}")
     public ResponseEntity<Page<ReviewDto>> getReviewsForListing(@PathVariable Long listingId,
                                                                 @RequestParam(required = false) boolean sortByDate,

@@ -4,9 +4,11 @@ import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Builder
 @Data
-public class CreationReviewDto {
+public class CreationReviewDto implements Serializable {
     @NotNull(message = "Listing ID is required")
     private Long listingId;
 

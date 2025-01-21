@@ -15,6 +15,7 @@ import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,17 @@ public class BookingService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final RedisCacheCleaner redisCacheCleaner;
+
+    @Cacheable(cacheNames = "bookings", key = "#bookingId")
+    public BookingDto getBookingById(Long bookingId, String username) {
+        BookingEntity booking = findBookingById(bookingId);
+        
+        if(!username.equals(booking.getTenant().getUsername())) {
+            throw new BadRequestException("You are not authorized to view this booking");
+        }
+        
+        return bookingDtoFactory.makeBookingDto(booking);
+    }
 
     @Cacheable(cacheNames = "bookings", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookings(String username, int page, int size) {
@@ -86,6 +98,7 @@ public class BookingService {
         return bookingDtoFactory.makeBookingDto(savedBooking);
     }
 
+    @CacheEvict(cacheNames = "bookings", key = "#bookingId")
     @Transactional
     public boolean confirmBookingByLandlord(Long bookingId, String username) {
         BookingEntity booking = findBookingById(bookingId);
@@ -114,6 +127,7 @@ public class BookingService {
         return true;
     }
 
+    @CacheEvict(cacheNames = "bookings", key = "#bookingId")
     @Transactional
     public boolean cancelBookingByTenant(Long bookingId, String username) {
         BookingEntity booking = findBookingById(bookingId);
@@ -144,6 +158,7 @@ public class BookingService {
         return true;
     }
 
+    @CacheEvict(cacheNames = "bookings", key = "#bookingId")
     @Transactional
     public boolean declineBookingByLandlord(Long bookingId, String username) {
         BookingEntity booking = findBookingById(bookingId);
@@ -193,11 +208,6 @@ public class BookingService {
         }
     }
 
-    private BookingEntity findBookingById(Long bookingId) {
-        return bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
-    }
-
     private static void validateBookingCreation(ListingEntity listingToBook, UserEntity user, Instant startDateTime,
                                                 Instant endDateTime) {
         if (listingToBook.getLandlord().getUsername().equals(user.getUsername())) {
@@ -219,6 +229,11 @@ public class BookingService {
                         "The booking start date is only available after: " + lastBooking.getEndDate());
             }
         }
+    }
+
+    private BookingEntity findBookingById(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
     }
 
     private UserEntity findUserByUsername(String username) {
