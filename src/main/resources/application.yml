@@ -1,9 +1,11 @@
 server:
   port: 8080
 
+
 jwt:
   secret: 8kuunS6IaBPePyisBoTl9Qa3uQbuEM3+szIgYQyijBrwQxTuuKfDdaM00sa+raqlgKkCJ1J6mJB3kfC6XXJI4g==
   expiration: 900000
+
 
 spring:
   datasource:
