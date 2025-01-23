@@ -1,5 +1,6 @@
 package com.rentalplatform.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
@@ -34,7 +36,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundException(UsernameNotFoundException ex) {
+    public ErrorResponse handleNotFoundException(NotFoundException ex) {
         return new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage(), Instant.now());
     }
 
@@ -47,12 +49,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation error",
-                Instant.now(),
-                errors
-        );
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Validation error")
+                .timestamp(Instant.now())
+                .build();
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
@@ -75,15 +76,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred.");
+        log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred.", ex.getMessage());
     }
 
-    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                status.value(),
-                message,
-                Instant.now()
-        );
+    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message, String exceptionMsg) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(status.value())
+                .message(message)
+                .exceptionMessage(exceptionMsg)
+                .timestamp(Instant.now())
+                .build();
         return new ResponseEntity<>(errorResponse, status);
     }
 }

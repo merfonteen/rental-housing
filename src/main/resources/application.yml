@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+jwt:
+  secret: 8kuunS6IaBPePyisBoTl9Qa3uQbuEM3+szIgYQyijBrwQxTuuKfDdaM00sa+raqlgKkCJ1J6mJB3kfC6XXJI4g==
+  expiration: 900000
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/rentalplatformdb
@@ -18,6 +22,8 @@ spring:
     redis:
       host: localhost
       port: 6379
+      repositories:
+        enabled: false
   mail:
     host: smtp.gmail.com
     port: 587
@@ -28,6 +34,14 @@ spring:
         smtp:
           auth: true
           starttls.enable: true
-jwt:
-  secret: 8kuunS6IaBPePyisBoTl9Qa3uQbuEM3+szIgYQyijBrwQxTuuKfDdaM00sa+raqlgKkCJ1J6mJB3kfC6XXJI4g==
-  expiration: 900000
+  cloud:
+    aws:
+      credentials:
+        access-key: AKIA6ELKODRIT2TOOLUF
+        secret-key: 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
+      region:
+        static: eu-west-2
+      s3:
+        bucket: rental-housing-app-photos
+
+

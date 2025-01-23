@@ -56,6 +56,10 @@ public class ListingEntity implements Serializable {
     private List<BookingEntity> bookings = new ArrayList<>();
 
     @Builder.Default
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImageEntity> images = new ArrayList<>();
+
+    @Builder.Default
     private Instant createdAt = Instant.now();
 
     @Column(name = "next_available_date")

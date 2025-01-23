@@ -6,10 +6,12 @@ import java.time.Instant;
 import java.util.Map;
 
 @Data
+@Builder
 @AllArgsConstructor
 public class ErrorResponse {
     private int status;
     private String message;
+    private String exceptionMessage;
     private Instant timestamp;
     private Map<String, String> errors;
 
