@@ -1,4 +1,4 @@
-package com.rentalplatform.factory;
+package com.rentalplatform.mapper;
 
 import com.rentalplatform.dto.ListingDto;
 import com.rentalplatform.entity.ListingEntity;
@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
-public class ListingDtoFactory {
+public class ListingDtoMapper {
 
-    private final ReviewDtoFactory reviewDtoFactory;
+    private final ReviewDtoMapper reviewDtoMapper;
 
     public List<ListingDto> makeListingDto(List<ListingEntity> listings) {
         return listings.stream()
@@ -52,7 +52,7 @@ public class ListingDtoFactory {
                 .reviews(
                         listing.getReviews()
                                 .stream()
-                                .map(reviewDtoFactory::makeReviewDto)
+                                .map(reviewDtoMapper::makeReviewDto)
                                 .collect(Collectors.toList()))
                 .build();
     }

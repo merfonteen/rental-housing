@@ -1,4 +1,4 @@
-package com.rentalplatform.factory;
+package com.rentalplatform.mapper;
 
 import com.rentalplatform.dto.NotificationDto;
 import com.rentalplatform.entity.NotificationEntity;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class NotificationDtoFactory {
+public class NotificationDtoMapper {
     public List<NotificationDto> makeNotificationDto(List<NotificationEntity> notifications) {
         return notifications.stream()
                 .map(this::makeNotificationDto)

@@ -6,7 +6,7 @@ import com.rentalplatform.entity.NotificationEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.NotificationDtoFactory;
+import com.rentalplatform.mapper.NotificationDtoMapper;
 import com.rentalplatform.repository.NotificationRepository;
 import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.utils.RedisCacheCleaner;
@@ -23,7 +23,7 @@ public class NotificationService {
 
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
-    private final NotificationDtoFactory notificationDtoFactory;
+    private final NotificationDtoMapper notificationDtoMapper;
     private final RedisCacheCleaner redisCacheCleaner;
     private final NotificationWebSocketController notificationWebSocketController;
 
@@ -35,7 +35,7 @@ public class NotificationService {
             throw new BadRequestException("You are not authorized to view this notification");
         }
 
-        return notificationDtoFactory.makeNotificationDto(notification);
+        return notificationDtoMapper.makeNotificationDto(notification);
     }
 
     @Cacheable(cacheNames = "notifications", key = "#username + '_' + #page + '_' + #size")
@@ -50,7 +50,7 @@ public class NotificationService {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<NotificationEntity> notifications = notificationRepository.findAllByUserId(currentUser.getId(), pageRequest);
 
-        return notifications.map(notificationDtoFactory::makeNotificationDto);
+        return notifications.map(notificationDtoMapper::makeNotificationDto);
     }
 
     @Cacheable(cacheNames = "unreadNotifications", key = "#username + '_' + #page + '_' + #size")
@@ -66,7 +66,7 @@ public class NotificationService {
         Page<NotificationEntity> notifications = notificationRepository
                 .findAllByUserIdAndIsReadFalse(currentUser.getId(), pageRequest);
 
-        return notifications.map(notificationDtoFactory::makeNotificationDto);
+        return notifications.map(notificationDtoMapper::makeNotificationDto);
     }
 
     public void createNotification(String message, UserEntity user) {

@@ -5,7 +5,7 @@ import com.rentalplatform.entity.RoleEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.UserDtoFactory;
+import com.rentalplatform.mapper.UserDtoMapper;
 import com.rentalplatform.repository.RoleRepository;
 import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.security.JwtTokenUtil;
@@ -28,7 +28,7 @@ public class UserService {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final UserDtoFactory userDtoFactory;
+    private final UserDtoMapper userDtoMapper;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final AuthenticationManager authenticationManager;
@@ -55,7 +55,7 @@ public class UserService {
 
         UserEntity savedUser = userRepository.save(user);
 
-        return userDtoFactory.makeUserDto(savedUser, false);
+        return userDtoMapper.makeUserDto(savedUser, false);
     }
 
     public TokenResponse signIn(LoginDto loginDto) {
@@ -80,7 +80,7 @@ public class UserService {
 
     public UserDto getProfileInfo(String username) {
         UserEntity currentUser = getCurrentUser(username);
-        return userDtoFactory.makeUserDto(currentUser, true);
+        return userDtoMapper.makeUserDto(currentUser, true);
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class UserService {
 
         UserEntity savedUser = userRepository.save(user);
 
-        return userDtoFactory.makeUserDto(savedUser, false);
+        return userDtoMapper.makeUserDto(savedUser, false);
     }
 
     @Transactional
@@ -126,7 +126,7 @@ public class UserService {
 
         userRepository.save(currentUser);
 
-        return userDtoFactory.makeUserDto(currentUser, false);
+        return userDtoMapper.makeUserDto(currentUser, false);
     }
 
     @Transactional

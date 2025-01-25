@@ -9,7 +9,7 @@ import com.rentalplatform.entity.ReviewEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.ReviewDtoFactory;
+import com.rentalplatform.mapper.ReviewDtoMapper;
 import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.ReviewRepository;
@@ -35,7 +35,7 @@ public class ReviewService {
     private final RatingService ratingService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
-    private final ReviewDtoFactory reviewDtoFactory;
+    private final ReviewDtoMapper reviewDtoMapper;
     private final BookingRepository bookingRepository;
     private final ListingRepository listingRepository;
     private final NotificationService notificationService;
@@ -45,7 +45,7 @@ public class ReviewService {
     public ReviewDto getReviewById(Long reviewId) {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
-        return reviewDtoFactory.makeReviewDto(review);
+        return reviewDtoMapper.makeReviewDto(review);
     }
 
     @Cacheable(cacheNames = "reviews", key = "#listingId + '-' + #sortByDate + '-' + #sortByRating + '-' + #page + '-' + #size")
@@ -64,10 +64,10 @@ public class ReviewService {
        Comparator<ReviewEntity> comparator = determineComparator(sortByDate, sortByRating);
 
        if(comparator != null) {
-           return sortByComparator(reviews, comparator, pageRequest).map(reviewDtoFactory::makeReviewDto);
+           return sortByComparator(reviews, comparator, pageRequest).map(reviewDtoMapper::makeReviewDto);
        }
 
-        return reviews.map(reviewDtoFactory::makeReviewDto);
+        return reviews.map(reviewDtoMapper::makeReviewDto);
     }
 
     @Transactional
@@ -101,7 +101,7 @@ public class ReviewService {
                         .formatted(listing.getTitle(), review.getTenant(), review.getComment()),
                 listing.getLandlord());
 
-        return reviewDtoFactory.makeReviewDto(savedReview);
+        return reviewDtoMapper.makeReviewDto(savedReview);
     }
 
     @CacheEvict(cacheNames = "reviews", key = "#reviewId")
@@ -117,7 +117,7 @@ public class ReviewService {
         redisCacheCleaner.evictCacheForReviewByListingId(review.getListing().getId());
 
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
-        return reviewDtoFactory.makeReviewDto(savedReview);
+        return reviewDtoMapper.makeReviewDto(savedReview);
     }
 
     @CacheEvict(cacheNames = "reviews", key = "#reviewId")

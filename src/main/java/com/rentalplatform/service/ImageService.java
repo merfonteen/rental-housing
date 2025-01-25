@@ -1,28 +1,50 @@
 package com.rentalplatform.service;
 
 import com.rentalplatform.config.AwsS3Config;
+import com.rentalplatform.dto.ImageDto;
 import com.rentalplatform.entity.ImageEntity;
 import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
+import com.rentalplatform.mapper.ImageDtoMapper;
 import com.rentalplatform.repository.ImageRepository;
 import com.rentalplatform.repository.ListingRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class S3StorageService {
+public class ImageService {
 
     private final S3Client s3Client;
     private final AwsS3Config awsS3Config;
+    private final ImageDtoMapper imageDtoMapper;
     private final ImageRepository imageRepository;
     private final ListingRepository listingRepository;
 
+    public ImageDto getImageForListing(Long listingId, Long imageId) {
+        ListingEntity listing = findListingById(listingId);
+        ImageEntity image = findImageById(imageId);
+
+        if(!image.getListing().getId().equals(listing.getId())) {
+            throw new BadRequestException("The image with id '%d' doesn't below to listing with id '%d'"
+                    .formatted(imageId, listingId));
+        }
+
+        return imageDtoMapper.makeImageDto(image);
+    }
+
+    public List<ImageDto> getImagesForListing(Long listingId) {
+        return imageDtoMapper.makeImageDto(imageRepository.findAllByListingId(listingId));
+    }
+
+    @Transactional
     public String uploadFile(Long listingId, MultipartFile file, String filename) throws IOException {
         ListingEntity listing = findListingById(listingId);
 
@@ -44,6 +66,7 @@ public class S3StorageService {
         return url;
     }
 
+    @Transactional
     public void deleteFile(Long listingId, String filename) {
         ListingEntity listing = findListingById(listingId);
         ImageEntity imageToDelete = findImageByFilename(filename);
@@ -60,6 +83,11 @@ public class S3StorageService {
     private ImageEntity findImageByFilename(String filename) {
         return imageRepository.findByFilename(filename)
                 .orElseThrow(() -> new NotFoundException("Image with filename '%s' not found".formatted(filename)));
+    }
+
+    private ImageEntity findImageById(Long imageId) {
+        return imageRepository.findById(imageId)
+                .orElseThrow(() -> new NotFoundException("Image with id '%d' not found".formatted(imageId)));
     }
 
     private ListingEntity findListingById(Long listingId) {

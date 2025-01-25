@@ -1,4 +1,4 @@
-package com.rentalplatform.factory;
+package com.rentalplatform.mapper;
 
 import com.rentalplatform.dto.ReviewDto;
 import com.rentalplatform.entity.ReviewEntity;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class ReviewDtoFactory {
+public class ReviewDtoMapper {
     public ReviewDto makeReviewDto(ReviewEntity review) {
         return ReviewDto.builder()
                 .id(review.getId())

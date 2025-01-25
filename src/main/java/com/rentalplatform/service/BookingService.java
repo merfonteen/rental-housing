@@ -8,7 +8,7 @@ import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.BookingDtoFactory;
+import com.rentalplatform.mapper.BookingDtoMapper;
 import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
@@ -33,7 +33,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final BookingRepository bookingRepository;
-    private final BookingDtoFactory bookingDtoFactory;
+    private final BookingDtoMapper bookingDtoMapper;
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final RedisCacheCleaner redisCacheCleaner;
@@ -46,21 +46,21 @@ public class BookingService {
             throw new BadRequestException("You are not authorized to view this booking");
         }
         
-        return bookingDtoFactory.makeBookingDto(booking);
+        return bookingDtoMapper.makeBookingDto(booking);
     }
 
     @Cacheable(cacheNames = "bookings", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookings(String username, int page, int size) {
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByTenantUsernameOrLandlordUsername(username, request);
-        return bookings.map(bookingDtoFactory::makeBookingDto);
+        return bookings.map(bookingDtoMapper::makeBookingDto);
     }
 
     @Cacheable(cacheNames = "bookingsForLandlord", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookingsForLandlord(String username, int page, int size) {
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByListingLandlordUsername(username, request);
-        return bookings.map(bookingDtoFactory::makeBookingDto);
+        return bookings.map(bookingDtoMapper::makeBookingDto);
     }
 
     public BookingDto createBooking(CreationBookingDto bookingDto, String username) {
@@ -95,7 +95,7 @@ public class BookingService {
                         .formatted(listingToBook.getTitle()),
                 listingToBook.getLandlord());
 
-        return bookingDtoFactory.makeBookingDto(savedBooking);
+        return bookingDtoMapper.makeBookingDto(savedBooking);
     }
 
     @CacheEvict(cacheNames = "bookings", key = "#bookingId")

@@ -1,4 +1,4 @@
-package com.rentalplatform.factory;
+package com.rentalplatform.mapper;
 
 import com.rentalplatform.dto.BookingDto;
 import com.rentalplatform.entity.BookingEntity;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class BookingDtoFactory {
+public class BookingDtoMapper {
     public List<BookingDto> makeBookingDto(List<BookingEntity> bookings) {
         return bookings.stream()
                 .map(this::makeBookingDto)

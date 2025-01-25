@@ -1,13 +1,12 @@
 package com.rentalplatform.service;
 
 import com.rentalplatform.dto.ListingDto;
-import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.FavoriteEntity;
 import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.ListingDtoFactory;
+import com.rentalplatform.mapper.ListingDtoMapper;
 import com.rentalplatform.repository.FavoriteRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
@@ -26,12 +25,12 @@ public class FavoriteService {
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final FavoriteRepository favoriteRepository;
-    private final ListingDtoFactory listingDtoFactory;
+    private final ListingDtoMapper listingDtoMapper;
 
     public ListingDto getFavoriteById(Long favoriteId) {
         FavoriteEntity favorite = favoriteRepository.findById(favoriteId)
                 .orElseThrow(() -> new NotFoundException("Favorite listing with id '%d' not found".formatted(favoriteId)));
-        return listingDtoFactory.makeListingDto(favorite.getListing());
+        return listingDtoMapper.makeListingDto(favorite.getListing());
     }
 
     @Cacheable(cacheNames = "favoriteListings", key = "#username")
@@ -44,7 +43,7 @@ public class FavoriteService {
                 .map(FavoriteEntity::getListing)
                 .toList();
 
-        return listingDtoFactory.makeListingDto(listings);
+        return listingDtoMapper.makeListingDto(listings);
     }
 
     @CacheEvict(cacheNames = "favoriteListings", key = "#username")
@@ -65,7 +64,7 @@ public class FavoriteService {
                         .listing(listingToAdd)
                         .build());
 
-        return listingDtoFactory.makeListingDto(listingToAdd);
+        return listingDtoMapper.makeListingDto(listingToAdd);
     }
 
     @CacheEvict(cacheNames = "favoriteListings", key = "#username")

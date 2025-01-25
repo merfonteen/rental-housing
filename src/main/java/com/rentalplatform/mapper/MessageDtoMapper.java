@@ -1,4 +1,4 @@
-package com.rentalplatform.factory;
+package com.rentalplatform.mapper;
 
 import com.rentalplatform.dto.MessageDto;
 import com.rentalplatform.entity.MessageEntity;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class MessageDtoFactory {
+public class MessageDtoMapper {
     public MessageDto makeMessageDto(MessageEntity message) {
         return MessageDto.builder()
                 .id(message.getId())

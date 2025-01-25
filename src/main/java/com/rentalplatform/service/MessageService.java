@@ -6,7 +6,7 @@ import com.rentalplatform.entity.MessageEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.MessageDtoFactory;
+import com.rentalplatform.mapper.MessageDtoMapper;
 import com.rentalplatform.repository.MessageRepository;
 import com.rentalplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -24,27 +24,27 @@ public class MessageService {
 
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
-    private final MessageDtoFactory messageDtoFactory;
+    private final MessageDtoMapper messageDtoMapper;
     private final MessageWebSocketController messageWebSocketController;
 
     public List<MessageDto> getConversation(String receiverUsername, String senderUsername) {
         UserEntity receiver = findByUsername(receiverUsername);
         UserEntity sender = findByUsername(senderUsername);
 
-        return messageDtoFactory.makeMessageDto(
+        return messageDtoMapper.makeMessageDto(
                 messageRepository.findAllBySenderIdAndReceiverId(sender.getId(), receiver.getId()));
     }
 
     @Cacheable(cacheNames = "messages", key = "#username")
     public List<MessageDto> getAllMessages(String username) {
         findByUsername(username);
-        return messageDtoFactory.makeMessageDto(messageRepository.findAllByUsername(username));
+        return messageDtoMapper.makeMessageDto(messageRepository.findAllByUsername(username));
     }
 
     @Cacheable(cacheNames = "unreadMessages", key = "#username")
     public List<MessageDto> getUnreadMessages(String username) {
         UserEntity user = findByUsername(username);
-        return messageDtoFactory.makeMessageDto(messageRepository.findAllByReceiverIdAndIsReadFalse(user.getId()));
+        return messageDtoMapper.makeMessageDto(messageRepository.findAllByReceiverIdAndIsReadFalse(user.getId()));
     }
 
     @Caching(evict = {
@@ -79,7 +79,7 @@ public class MessageService {
         message.setRead(true);
         MessageEntity savedMessage = messageRepository.save(message);
 
-        return messageDtoFactory.makeMessageDto(savedMessage);
+        return messageDtoMapper.makeMessageDto(savedMessage);
     }
 
     private UserEntity findByUsername(String username) {

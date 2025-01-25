@@ -8,7 +8,7 @@ import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
-import com.rentalplatform.factory.ListingDtoFactory;
+import com.rentalplatform.mapper.ListingDtoMapper;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.utils.ListingSpecification;
@@ -25,12 +25,12 @@ public class ListingService {
 
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
-    private final ListingDtoFactory listingDtoFactory;
+    private final ListingDtoMapper listingDtoMapper;
 
     public ListingDto getListingById(Long listingId) {
         ListingEntity listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
-        return listingDtoFactory.makeListingDto(listing);
+        return listingDtoMapper.makeListingDto(listing);
     }
 
     public Page<ListingDto> getMyListings(String currentUsername, int page, int size) {
@@ -44,7 +44,7 @@ public class ListingService {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<ListingEntity> listings = listingRepository.findAllWithReviewsByLandlordId(landlord.getId(), pageRequest);
 
-        return listings.map(listingDtoFactory::makeListingDtoWithReviews);
+        return listings.map(listingDtoMapper::makeListingDtoWithReviews);
     }
 
     public Page<ListingDto> getAllListings(FilterListingsDto filter, int page, int size) {
@@ -66,7 +66,7 @@ public class ListingService {
 
         Page<ListingEntity> listings = listingRepository.findAll(specification, pageRequest);
 
-        return listings.map(listingDtoFactory::makeListingDtoWithReviews);
+        return listings.map(listingDtoMapper::makeListingDtoWithReviews);
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class ListingService {
                         .build()
         );
 
-        return listingDtoFactory.makeListingDto(listing);
+        return listingDtoMapper.makeListingDto(listing);
     }
 
     @Transactional
@@ -106,7 +106,7 @@ public class ListingService {
 
         ListingEntity updatedListing = listingRepository.save(listing);
 
-        return listingDtoFactory.makeListingDto(updatedListing);
+        return listingDtoMapper.makeListingDto(updatedListing);
     }
 
     @Transactional
