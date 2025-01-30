@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.print.Book;
 import java.security.Principal;
 import java.util.List;
 
@@ -54,19 +55,19 @@ public class BookingController {
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @PostMapping(CONFIRM_BY_ID)
-    public ResponseEntity<Boolean> confirmBooking(@PathVariable Long bookingId, Principal principal) {
+    public ResponseEntity<BookingDto> confirmBooking(@PathVariable Long bookingId, Principal principal) {
         return ResponseEntity.ok(bookingService.confirmBookingByLandlord(bookingId, principal.getName()));
     }
 
     @PreAuthorize("hasRole('ROLE_TENANT')")
     @PatchMapping(CANCEL_BY_ID)
-    public ResponseEntity<Boolean> cancelBooking(@PathVariable Long bookingId, Principal principal) {
+    public ResponseEntity<BookingDto> cancelBooking(@PathVariable Long bookingId, Principal principal) {
         return ResponseEntity.ok(bookingService.cancelBookingByTenant(bookingId, principal.getName()));
     }
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @PatchMapping(DECLINE_BY_ID)
-    public ResponseEntity<Boolean> declineBooking(@PathVariable Long bookingId, Principal principal) {
+    public ResponseEntity<BookingDto> declineBooking(@PathVariable Long bookingId, Principal principal) {
         return ResponseEntity.ok(bookingService.declineBookingByLandlord(bookingId, principal.getName()));
     }
 }

@@ -1,12 +1,14 @@
 package com.rentalplatform.utils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class RedisCacheCleaner {
@@ -29,7 +31,7 @@ public class RedisCacheCleaner {
         evictCacheByPattern("notifications::" + username + "-*");
     }
 
-    private void evictCacheByPattern(String pattern) {
+    public void evictCacheByPattern(String pattern) {
         RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
 
         try (Cursor<byte[]> cursor = connection.scan(
@@ -41,6 +43,7 @@ public class RedisCacheCleaner {
             }
 
         } catch (Exception e) {
+            log.error("Error while scanning Redis keys");
             throw new RuntimeException("Error while scanning Redis keys", e);
         }
     }

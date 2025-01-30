@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.awt.print.Book;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -51,6 +52,9 @@ public class BookingService {
 
     @Cacheable(cacheNames = "bookings", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookings(String username, int page, int size) {
+        if(size > 50) {
+            throw new BadRequestException("Maximum page size is 50");
+        }
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByTenantUsernameOrLandlordUsername(username, request);
         return bookings.map(bookingDtoMapper::makeBookingDto);
@@ -58,6 +62,9 @@ public class BookingService {
 
     @Cacheable(cacheNames = "bookingsForLandlord", key = "#username + '_' + #page + '_' + #size")
     public Page<BookingDto> getBookingsForLandlord(String username, int page, int size) {
+        if(size > 50) {
+            throw new BadRequestException("Maximum page size is 50");
+        }
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByListingLandlordUsername(username, request);
         return bookings.map(bookingDtoMapper::makeBookingDto);
@@ -98,22 +105,21 @@ public class BookingService {
         return bookingDtoMapper.makeBookingDto(savedBooking);
     }
 
-    @CacheEvict(cacheNames = "bookings", key = "#bookingId")
     @Transactional
-    public boolean confirmBookingByLandlord(Long bookingId, String username) {
+    public BookingDto confirmBookingByLandlord(Long bookingId, String username) {
         BookingEntity booking = findBookingById(bookingId);
 
         if (!booking.getListing().getLandlord().getUsername().equals(username)) {
             throw new BadRequestException("You are not authorized to confirm this booking");
         }
 
-        validateBookingStatus(booking, BookingStatus.PENDING,
-                "Only bookings with status 'PENDING' can be declined");
+        validateBookingStatus(booking, "Only bookings with status 'PENDING' can be confirmed");
 
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
 
-        redisCacheCleaner.evictBookingCacheForUser(username);
+        redisCacheCleaner.evictCacheByPattern("bookings::" + bookingId);
+        redisCacheCleaner.evictBookingCacheForUser(booking.getTenant().getUsername());
         redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
         emailService.sendEmail(booking.getTenant().getEmail(),
@@ -124,15 +130,12 @@ public class BookingService {
                         .formatted(booking.getListing().getTitle()),
                 booking.getTenant());
 
-        return true;
+        return bookingDtoMapper.makeBookingDto(booking);
     }
 
-    @CacheEvict(cacheNames = "bookings", key = "#bookingId")
     @Transactional
-    public boolean cancelBookingByTenant(Long bookingId, String username) {
+    public BookingDto cancelBookingByTenant(Long bookingId, String username) {
         BookingEntity booking = findBookingById(bookingId);
-
-        validateLandlord(username, booking.getListing());
 
         if (booking.getStartDate().isBefore(Instant.now())) {
             throw new BadRequestException("You cannot cancel a booking already that has already started");
@@ -144,6 +147,7 @@ public class BookingService {
 
         bookingRepository.save(booking);
 
+        redisCacheCleaner.evictCacheByPattern("bookings::" + bookingId);
         redisCacheCleaner.evictBookingCacheForUser(username);
         redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
@@ -155,34 +159,32 @@ public class BookingService {
                         .formatted(booking.getListing().getTitle()),
                 booking.getListing().getLandlord());
 
-        return true;
+        return bookingDtoMapper.makeBookingDto(booking);
     }
 
-    @CacheEvict(cacheNames = "bookings", key = "#bookingId")
     @Transactional
-    public boolean declineBookingByLandlord(Long bookingId, String username) {
+    public BookingDto declineBookingByLandlord(Long bookingId, String username) {
         BookingEntity booking = findBookingById(bookingId);
 
-        validateLandlord(username, booking.getListing());
-        validateBookingStatus(booking, BookingStatus.PENDING,
-                "Only bookings with status 'PENDING' can be declined");
+        validateBookingStatus(booking, "Only bookings with status 'PENDING' can be declined");
 
         booking.setStatus(BookingStatus.CANCELLED);
 
         bookingRepository.save(booking);
 
-        redisCacheCleaner.evictBookingCacheForUser(username);
+        redisCacheCleaner.evictCacheByPattern("bookings::" + bookingId);
+        redisCacheCleaner.evictBookingCacheForUser(booking.getTenant().getUsername());
         redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
         emailService.sendEmail(booking.getTenant().getEmail(),
                 "Booking Declined",
-                "The landlord has declined your booking '%s'".formatted(booking.getListing().getTitle()));
+                "The landlord has declined booking for the listing '%s'".formatted(booking.getListing().getTitle()));
 
-        notificationService.createNotification("The landlord has declined your booking '%s'"
+        notificationService.createNotification("The landlord has declined booking for the listing '%s'"
                         .formatted(booking.getListing().getTitle()),
                 booking.getTenant());
 
-        return true;
+        return bookingDtoMapper.makeBookingDto(booking);
     }
 
     private void updateNextAvailableDate(ListingEntity listing) {
@@ -196,15 +198,9 @@ public class BookingService {
         }
     }
 
-    private void validateBookingStatus(BookingEntity booking, BookingStatus requiredStatus, String errorMessage) {
-        if (booking.getStatus() != requiredStatus) {
+    private void validateBookingStatus(BookingEntity booking, String errorMessage) {
+        if (booking.getStatus() != BookingStatus.PENDING) {
             throw new BadRequestException(errorMessage);
-        }
-    }
-
-    private static void validateLandlord(String username, ListingEntity listing) {
-        if (!listing.getLandlord().getUsername().equals(username)) {
-            throw new BadRequestException("You are not authorized to cancel this booking");
         }
     }
 
