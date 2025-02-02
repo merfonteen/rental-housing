@@ -28,14 +28,13 @@ public class ListingService {
     private final ListingDtoMapper listingDtoMapper;
 
     public ListingDto getListingById(Long listingId) {
-        ListingEntity listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
+        ListingEntity listing = findListingById(listingId);
         return listingDtoMapper.makeListingDto(listing);
     }
 
-    public Page<ListingDto> getMyListings(String currentUsername, int page, int size) {
-        UserEntity landlord = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new BadRequestException("User '%s' not found".formatted(currentUsername)));
+    public Page<ListingDto> getMyListings(String username, int page, int size) {
+        UserEntity landlord = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
 
         if(size > 50) {
             throw new BadRequestException("Maximum page size is 50");
@@ -72,7 +71,7 @@ public class ListingService {
     @Transactional
     public ListingDto createListing(CreationListingDto creationListingDto, String currentUsername) {
         UserEntity landlord = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new BadRequestException("User '%s' not found".formatted(currentUsername)));
+                .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(currentUsername)));
 
         if (listingRepository.existsByTitleAndAddressAndLandlord(
                 creationListingDto.getTitle(),
@@ -98,9 +97,7 @@ public class ListingService {
 
     @Transactional
     public ListingDto editListing(Long listingId, EditListingDto editListingDto, String currentUsername) {
-        ListingEntity listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
-                        formatted(listingId)));
+        ListingEntity listing = findListingById(listingId);
 
         validateUpdatingListing(editListingDto, currentUsername, listing);
 
@@ -111,21 +108,19 @@ public class ListingService {
 
     @Transactional
     public void deleteListing(Long listingId, String currentUsername) {
-        ListingEntity listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
-                        formatted(listingId)));
-
-        if(!listing.getLandlord().getUsername().equals(currentUsername)) {
-            throw new BadRequestException("You are not the owner of this listing");
-        }
-
+        ListingEntity listing = findListingById(listingId);
+        validateLandlordListing(currentUsername, listing);
         listingRepository.delete(listing);
     }
 
+    private ListingEntity findListingById(Long listingId) {
+        return listingRepository.findById(listingId)
+                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
+                        formatted(listingId)));
+    }
+
     private static void validateUpdatingListing(EditListingDto editListingDto, String currentUsername, ListingEntity listing) {
-        if(!listing.getLandlord().getUsername().equals(currentUsername)) {
-            throw new BadRequestException("You are not the owner of this listing");
-        }
+        validateLandlordListing(currentUsername, listing);
 
         if(editListingDto.getTitle() != null && !editListingDto.getTitle().isEmpty()) {
             listing.setTitle(editListingDto.getTitle());
@@ -149,6 +144,12 @@ public class ListingService {
 
         if(editListingDto.getType() != null) {
             listing.setType(editListingDto.getType());
+        }
+    }
+
+    private static void validateLandlordListing(String currentUsername, ListingEntity listing) {
+        if(!listing.getLandlord().getUsername().equals(currentUsername)) {
+            throw new BadRequestException("You are not the owner of this listing");
         }
     }
 }

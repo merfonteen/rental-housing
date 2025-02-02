@@ -18,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -99,7 +98,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void testBookingById_WhenUnauthorized_ShouldThrowException() {
+    void testGetBookingById_WhenUnauthorized_ShouldThrowException() {
         Long bookingId = 1L;
         String username = "Unauthorized User";
         UserEntity user = new UserEntity();

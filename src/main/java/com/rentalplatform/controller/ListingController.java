@@ -28,9 +28,9 @@ public class ListingController {
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @GetMapping("/my-listings")
-    public ResponseEntity<Page<ListingDto>> getListings(Principal principal,
-                                                        @RequestParam(defaultValue = "0") int page,
-                                                        @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<ListingDto>> getMyListings(Principal principal,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(listingService.getMyListings(principal.getName(), page, size));
     }
 

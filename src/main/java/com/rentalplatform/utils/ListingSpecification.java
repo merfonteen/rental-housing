@@ -12,14 +12,14 @@ import java.time.LocalDate;
 public class ListingSpecification {
 
     public static Specification<ListingEntity> hasTitle(String title) {
-        if(title != null && title.isEmpty()) {
+        if(title != null && !title.isEmpty()) {
             return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("title"), "%" + title + "%");
         }
         return null;
     }
 
     public static Specification<ListingEntity> hasAddress(String address) {
-        if(address != null && address.isEmpty()) {
+        if(address != null && !address.isEmpty()) {
             return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("address"), "%" + address + "%");
         }
         return null;

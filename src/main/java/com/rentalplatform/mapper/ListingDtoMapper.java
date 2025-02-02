@@ -14,17 +14,12 @@ public class ListingDtoMapper {
 
     private final ReviewDtoMapper reviewDtoMapper;
 
-    public List<ListingDto> makeListingDto(List<ListingEntity> listings) {
-        return listings.stream()
-                .map(this::makeListingDto)
-                .collect(Collectors.toList());
-    }
-
     public ListingDto makeListingDto(ListingEntity listing) {
         return ListingDto.builder()
                 .id(listing.getId())
                 .title(listing.getTitle())
                 .description(listing.getDescription())
+                .address(listing.getAddress())
                 .price(listing.getPrice())
                 .type(listing.getType())
                 .ownerUsername(listing.getLandlord().getUsername())
@@ -33,9 +28,9 @@ public class ListingDtoMapper {
                 .build();
     }
 
-    public List<ListingDto> makeListingDtoWithReviews(List<ListingEntity> listings) {
+    public List<ListingDto> makeListingDto(List<ListingEntity> listings) {
         return listings.stream()
-                .map(this::makeListingDtoWithReviews)
+                .map(this::makeListingDto)
                 .collect(Collectors.toList());
     }
 
@@ -44,6 +39,7 @@ public class ListingDtoMapper {
                 .id(listing.getId())
                 .title(listing.getTitle())
                 .description(listing.getDescription())
+                .address(listing.getAddress())
                 .price(listing.getPrice())
                 .type(listing.getType())
                 .ownerUsername(listing.getLandlord().getUsername())
@@ -55,5 +51,11 @@ public class ListingDtoMapper {
                                 .map(reviewDtoMapper::makeReviewDto)
                                 .collect(Collectors.toList()))
                 .build();
+    }
+
+    public List<ListingDto> makeListingDtoWithReviews(List<ListingEntity> listings) {
+        return listings.stream()
+                .map(this::makeListingDtoWithReviews)
+                .collect(Collectors.toList());
     }
 }
