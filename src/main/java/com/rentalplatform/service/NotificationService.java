@@ -78,7 +78,7 @@ public class NotificationService {
 
         notificationRepository.save(notification);
 
-        redisCacheCleaner.evictCacheForNotification(user.getUsername());
+        redisCacheCleaner.evictNotificationCacheByUsername(user.getUsername());
 
         notificationWebSocketController.sendNotification(user.getUsername(), message);
     }
@@ -87,7 +87,7 @@ public class NotificationService {
     public void markAsRead(Long notificationId) {
         NotificationEntity notification = findNotificationById(notificationId);
         notification.setRead(true);
-        redisCacheCleaner.evictCacheForNotification(notification.getUser().getUsername());
+        redisCacheCleaner.evictNotificationCacheByUsername(notification.getUser().getUsername());
     }
 
     private NotificationEntity findNotificationById(Long notificationId) {

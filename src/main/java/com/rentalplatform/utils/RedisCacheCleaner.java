@@ -15,7 +15,7 @@ public class RedisCacheCleaner {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public void evictCacheForReviewByListingId(Long listingId) {
+    public void evictReviewCacheByListingId(Long listingId) {
         evictCacheByPattern("reviews::" + listingId + "-*");
     }
 
@@ -27,7 +27,7 @@ public class RedisCacheCleaner {
         evictCacheByPattern("landlordBookings::" + username + "-*");
     }
 
-    public void evictCacheForNotification(String username) {
+    public void evictNotificationCacheByUsername(String username) {
         evictCacheByPattern("notifications::" + username + "-*");
     }
 

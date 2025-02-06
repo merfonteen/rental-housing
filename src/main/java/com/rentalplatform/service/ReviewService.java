@@ -43,16 +43,15 @@ public class ReviewService {
 
     @Cacheable(cacheNames = "reviews", key = "#reviewId")
     public ReviewDto getReviewById(Long reviewId) {
-        ReviewEntity review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
+        ReviewEntity review = findReviewByIdOrThrowException(reviewId);
         return reviewDtoMapper.makeReviewDto(review);
     }
 
     @Cacheable(cacheNames = "reviews", key = "#listingId + '-' + #sortByDate + '-' + #sortByRating + '-' + #page + '-' + #size")
     public Page<ReviewDto> getReviewsForListing(Long listingId, boolean sortByDate, boolean sortByRating,
                                                 int page, int size) {
-        listingRepository.findById(listingId).orElseThrow(
-                () -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
+
+        findListingByIdOrThrowException(listingId);
 
         if (size > 50) {
             throw new BadRequestException("Maximum page size is 50");
@@ -72,7 +71,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewDto createReview(CreationReviewDto creationReviewDto, String username) {
-        ListingEntity listing = findListingById(creationReviewDto.getListingId());
+        ListingEntity listing = findListingByIdOrThrowException(creationReviewDto.getListingId());
 
         UserEntity critic = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
@@ -90,7 +89,7 @@ public class ReviewService {
 
         ratingService.updateLandlordRating(listing.getLandlord().getId());
 
-        redisCacheCleaner.evictCacheForReviewByListingId(creationReviewDto.getListingId());
+        redisCacheCleaner.evictReviewCacheByListingId(creationReviewDto.getListingId());
 
         emailService.sendEmail(listing.getLandlord().getEmail(),
                 "New Review Received",
@@ -107,60 +106,38 @@ public class ReviewService {
     @CacheEvict(cacheNames = "reviews", key = "#reviewId")
     @Transactional
     public ReviewDto editReviewDto(Long reviewId, UpdateReviewDto updateReviewDto, String username) {
-        ReviewEntity review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
+        ReviewEntity review = findReviewByIdOrThrowException(reviewId);
 
         validateUpdatingReview(updateReviewDto, username, review);
 
         ReviewEntity savedReview = reviewRepository.save(review);
 
-        redisCacheCleaner.evictCacheForReviewByListingId(review.getListing().getId());
-
+        redisCacheCleaner.evictReviewCacheByListingId(review.getListing().getId());
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
+
         return reviewDtoMapper.makeReviewDto(savedReview);
     }
 
     @CacheEvict(cacheNames = "reviews", key = "#reviewId")
     @Transactional
-    public boolean deleteReview(Long reviewId, String username) {
-        ReviewEntity review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
+    public void deleteReview(Long reviewId, String username) {
+        ReviewEntity review = findReviewByIdOrThrowException(reviewId);
 
         if (!review.getTenant().getUsername().equals(username)) {
             throw new BadRequestException("You are not authorized to delete this review");
         }
 
         reviewRepository.delete(review);
-
-        redisCacheCleaner.evictCacheForReviewByListingId(review.getListing().getId());
-
+        redisCacheCleaner.evictReviewCacheByListingId(review.getListing().getId());
         ratingService.updateLandlordRating(review.getListing().getLandlord().getId());
-        return true;
     }
 
-    private Comparator<ReviewEntity> determineComparator(boolean sortByDate, boolean sortByRating) {
-        if(sortByDate && sortByRating) {
-            return Comparator.comparing(ReviewEntity::getCreatedAt).thenComparing(ReviewEntity::getRating);
-        }
-        else if(sortByDate) {
-            return Comparator.comparing(ReviewEntity::getCreatedAt);
-        }
-        else if(sortByRating) {
-            return Comparator.comparing(ReviewEntity::getRating);
-        }
-        return null;
+    private ReviewEntity findReviewByIdOrThrowException(Long reviewId) {
+        return reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review with id '%d' not found".formatted(reviewId)));
     }
 
-    private Page<ReviewEntity> sortByComparator(Page<ReviewEntity> reviews,
-                                                Comparator<ReviewEntity> comparator,
-                                                PageRequest pageRequest) {
-        List<ReviewEntity> sortedReviews = reviews.stream()
-                .sorted(comparator)
-                .toList();
-        return new PageImpl<>(sortedReviews, pageRequest, reviews.getTotalElements());
-    }
-
-    private ListingEntity findListingById(Long listingId) {
+    private ListingEntity findListingByIdOrThrowException(Long listingId) {
         return listingRepository.findById(listingId)
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
     }
@@ -187,5 +164,27 @@ public class ReviewService {
         if (updateReviewDto.getComment() != null && !updateReviewDto.getComment().isEmpty()) {
             review.setComment(updateReviewDto.getComment());
         }
+    }
+
+    private static Comparator<ReviewEntity> determineComparator(boolean sortByDate, boolean sortByRating) {
+        if(sortByDate && sortByRating) {
+            return Comparator.comparing(ReviewEntity::getCreatedAt).thenComparing(ReviewEntity::getRating);
+        }
+        else if(sortByDate) {
+            return Comparator.comparing(ReviewEntity::getCreatedAt);
+        }
+        else if(sortByRating) {
+            return Comparator.comparing(ReviewEntity::getRating);
+        }
+        return null;
+    }
+
+    private static Page<ReviewEntity> sortByComparator(Page<ReviewEntity> reviews,
+                                                Comparator<ReviewEntity> comparator,
+                                                PageRequest pageRequest) {
+        List<ReviewEntity> sortedReviews = reviews.stream()
+                .sorted(comparator)
+                .toList();
+        return new PageImpl<>(sortedReviews, pageRequest, reviews.getTotalElements());
     }
 }
