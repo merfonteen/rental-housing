@@ -35,7 +35,7 @@ public class FavoriteService {
 
     @Cacheable(cacheNames = "favoriteListings", key = "#username")
     public List<ListingDto> getFavoriteListings(String username) {
-        UserEntity user = getUser(username);
+        UserEntity user = findUserByUsernameOrThrowException(username);
 
         List<FavoriteEntity> favorites = favoriteRepository.findAllByUserId(user.getId());
 
@@ -49,9 +49,8 @@ public class FavoriteService {
     @CacheEvict(cacheNames = "favoriteListings", key = "#username")
     @Transactional
     public ListingDto addToFavorites(Long listingId, String username) {
-        ListingEntity listingToAdd = getListing(listingId);
-
-        UserEntity user = getUser(username);
+        ListingEntity listingToAdd = findListingByIdOrThrowException(listingId);
+        UserEntity user = findUserByUsernameOrThrowException(username);
 
         favoriteRepository.findByUserIdAndListingId(user.getId(), listingId)
                 .ifPresent(another -> {
@@ -70,8 +69,8 @@ public class FavoriteService {
     @CacheEvict(cacheNames = "favoriteListings", key = "#username")
     @Transactional
     public void removeFromFavorites(Long listingId, String username) {
-        UserEntity user = getUser(username);
-        ListingEntity listing = getListing(listingId);
+        findListingByIdOrThrowException(listingId);
+        UserEntity user = findUserByUsernameOrThrowException(username);
 
         favoriteRepository.findByUserIdAndListingId(user.getId(), listingId)
                 .ifPresentOrElse(favoriteRepository::delete, () -> {
@@ -79,12 +78,12 @@ public class FavoriteService {
                 });
     }
 
-    private UserEntity getUser(String username) {
+    private UserEntity findUserByUsernameOrThrowException(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
     }
 
-    private ListingEntity getListing(Long listingId) {
+    private ListingEntity findListingByIdOrThrowException(Long listingId) {
         return listingRepository.findById(listingId)
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
     }
