@@ -28,8 +28,8 @@ public class MessageService {
     private final MessageWebSocketController messageWebSocketController;
 
     public List<MessageDto> getConversation(String receiverUsername, String senderUsername) {
-        UserEntity receiver = findByUsername(receiverUsername);
-        UserEntity sender = findByUsername(senderUsername);
+        UserEntity receiver = findUserByUsernameOrThrowException(receiverUsername);
+        UserEntity sender = findUserByUsernameOrThrowException(senderUsername);
 
         return messageDtoMapper.makeMessageDto(
                 messageRepository.findAllBySenderIdAndReceiverId(sender.getId(), receiver.getId()));
@@ -37,13 +37,13 @@ public class MessageService {
 
     @Cacheable(cacheNames = "messages", key = "#username")
     public List<MessageDto> getAllMessages(String username) {
-        findByUsername(username);
+        findUserByUsernameOrThrowException(username);
         return messageDtoMapper.makeMessageDto(messageRepository.findAllByUsername(username));
     }
 
     @Cacheable(cacheNames = "unreadMessages", key = "#username")
     public List<MessageDto> getUnreadMessages(String username) {
-        UserEntity user = findByUsername(username);
+        UserEntity user = findUserByUsernameOrThrowException(username);
         return messageDtoMapper.makeMessageDto(messageRepository.findAllByReceiverIdAndIsReadFalse(user.getId()));
     }
 
@@ -53,8 +53,8 @@ public class MessageService {
     })
     @Transactional
     public void sendMessage(String receiverUsername, String content, String senderUsername) {
-        UserEntity receiver = findByUsername(receiverUsername);
-        UserEntity sender = findByUsername(senderUsername);
+        UserEntity receiver = findUserByUsernameOrThrowException(receiverUsername);
+        UserEntity sender = findUserByUsernameOrThrowException(senderUsername);
 
         MessageEntity message = MessageEntity.builder()
                 .content(content)
@@ -69,8 +69,7 @@ public class MessageService {
     @CacheEvict(cacheNames = "unreadMessages", key = "#username")
     @Transactional
     public MessageDto markAsRead(Long messageId, String username) {
-        MessageEntity message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new NotFoundException("Message with id '%d' not found".formatted(messageId)));
+        MessageEntity message = findMessageOrThrowException(messageId);
 
         if(!message.getReceiver().getUsername().equals(username)) {
             throw new BadRequestException("You are not not authorized to mark this message as read");
@@ -82,7 +81,12 @@ public class MessageService {
         return messageDtoMapper.makeMessageDto(savedMessage);
     }
 
-    private UserEntity findByUsername(String username) {
+    private MessageEntity findMessageOrThrowException(Long messageId) {
+        return messageRepository.findById(messageId)
+                .orElseThrow(() -> new NotFoundException("Message with id '%d' not found".formatted(messageId)));
+    }
+
+    private UserEntity findUserByUsernameOrThrowException(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
     }
