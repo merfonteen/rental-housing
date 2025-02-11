@@ -29,8 +29,8 @@ public class ImageService {
     private final ListingRepository listingRepository;
 
     public ImageDto getImageForListing(Long listingId, Long imageId) {
-        ListingEntity listing = findListingById(listingId);
-        ImageEntity image = findImageById(imageId);
+        ListingEntity listing = findListingByIdOrThrowException(listingId);
+        ImageEntity image = findImageByIdOrThrowException(imageId);
 
         if(!image.getListing().getId().equals(listing.getId())) {
             throw new BadRequestException("The image with id '%d' doesn't below to listing with id '%d'"
@@ -41,12 +41,13 @@ public class ImageService {
     }
 
     public List<ImageDto> getImagesForListing(Long listingId) {
+        findListingByIdOrThrowException(listingId);
         return imageDtoMapper.makeImageDto(imageRepository.findAllByListingId(listingId));
     }
 
     @Transactional
     public String uploadFile(Long listingId, MultipartFile file, String filename) throws IOException {
-        ListingEntity listing = findListingById(listingId);
+        ListingEntity listing = findListingByIdOrThrowException(listingId);
 
         s3Client.putObject(builder -> builder
                         .bucket(awsS3Config.getBucketName())
@@ -68,8 +69,8 @@ public class ImageService {
 
     @Transactional
     public void deleteFile(Long listingId, String filename) {
-        ListingEntity listing = findListingById(listingId);
-        ImageEntity imageToDelete = findImageByFilename(filename);
+        ListingEntity listing = findListingByIdOrThrowException(listingId);
+        ImageEntity imageToDelete = findImageByFilenameOrThrowException(filename);
 
         if(!listing.getImages().contains(imageToDelete)) {
             throw new BadRequestException("Listing with id '%d' doesn't contain image with filename '%s'"
@@ -80,17 +81,17 @@ public class ImageService {
         s3Client.deleteObject(builder -> builder.bucket(awsS3Config.getBucketName()).key(filename).build());
     }
 
-    private ImageEntity findImageByFilename(String filename) {
+    private ImageEntity findImageByFilenameOrThrowException(String filename) {
         return imageRepository.findByFilename(filename)
                 .orElseThrow(() -> new NotFoundException("Image with filename '%s' not found".formatted(filename)));
     }
 
-    private ImageEntity findImageById(Long imageId) {
+    private ImageEntity findImageByIdOrThrowException(Long imageId) {
         return imageRepository.findById(imageId)
                 .orElseThrow(() -> new NotFoundException("Image with id '%d' not found".formatted(imageId)));
     }
 
-    private ListingEntity findListingById(Long listingId) {
+    private ListingEntity findListingByIdOrThrowException(Long listingId) {
         return listingRepository.findById(listingId)
                 .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
     }
