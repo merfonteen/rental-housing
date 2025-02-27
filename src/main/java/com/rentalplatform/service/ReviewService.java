@@ -1,7 +1,7 @@
 package com.rentalplatform.service;
 
-import com.rentalplatform.dto.creationDto.CreationReviewDto;
 import com.rentalplatform.dto.ReviewDto;
+import com.rentalplatform.dto.creationDto.CreationReviewDto;
 import com.rentalplatform.dto.updateDto.UpdateReviewDto;
 import com.rentalplatform.entity.BookingStatus;
 import com.rentalplatform.entity.ListingEntity;
@@ -41,16 +41,18 @@ public class ReviewService {
     private final NotificationService notificationService;
     private final RedisCacheCleaner redisCacheCleaner;
 
-    @Cacheable(cacheNames = "reviews", key = "#reviewId")
+    @Cacheable(cacheNames = "reviews", key = "#reviewId", unless = "#result == null")
     public ReviewDto getReviewById(Long reviewId) {
         ReviewEntity review = findReviewByIdOrThrowException(reviewId);
         return reviewDtoMapper.makeReviewDto(review);
     }
 
-    @Cacheable(cacheNames = "reviews", key = "#listingId + '-' + #sortByDate + '-' + #sortByRating + '-' + #page + '-' + #size")
+    @Cacheable(cacheNames = "reviews",
+               key = "#listingId + '_' + #sortByDate + '_' + #sortByRating + '_' + #page + '_' + #size",
+               unless = "#result.content.isEmpty()"
+    )
     public Page<ReviewDto> getReviewsForListing(Long listingId, boolean sortByDate, boolean sortByRating,
                                                 int page, int size) {
-
         findListingByIdOrThrowException(listingId);
 
         if (size > 50) {
@@ -105,9 +107,8 @@ public class ReviewService {
 
     @CacheEvict(cacheNames = "reviews", key = "#reviewId")
     @Transactional
-    public ReviewDto editReviewDto(Long reviewId, UpdateReviewDto updateReviewDto, String username) {
+    public ReviewDto editReview(Long reviewId, UpdateReviewDto updateReviewDto, String username) {
         ReviewEntity review = findReviewByIdOrThrowException(reviewId);
-
         validateUpdatingReview(updateReviewDto, username, review);
 
         ReviewEntity savedReview = reviewRepository.save(review);

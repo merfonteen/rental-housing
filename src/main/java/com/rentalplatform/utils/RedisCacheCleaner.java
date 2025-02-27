@@ -16,19 +16,19 @@ public class RedisCacheCleaner {
     private final RedisTemplate<String, Object> redisTemplate;
 
     public void evictReviewCacheByListingId(Long listingId) {
-        evictCacheByPattern("reviews::" + listingId + "-*");
+        evictCacheByPattern("reviews::" + listingId + "_*");
     }
 
     public void evictBookingCacheForUser(String username) {
         evictCacheByPattern("bookings::" + username + "_*");
     }
 
-    public void evictBookingCacheForLandlord(String username) {
-        evictCacheByPattern("bookingsForLandlord::" + username + "_*");
+    public void evictBookingCacheForLandlord(String landlordUsername) {
+        evictCacheByPattern("bookingsForLandlord::" + landlordUsername + "_*");
     }
 
     public void evictNotificationCacheByUsername(String username) {
-        evictCacheByPattern("notifications::" + username + "-*");
+        evictCacheByPattern("notifications::" + username + "_*");
     }
 
     public void evictCacheByPattern(String pattern) {

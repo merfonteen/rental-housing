@@ -1,8 +1,8 @@
 package com.rentalplatform.cahingTesting;
 
 import com.rentalplatform.dto.BookingDto;
-import com.rentalplatform.dto.creationDto.CreationBookingDto;
 import com.rentalplatform.dto.PageDto;
+import com.rentalplatform.dto.creationDto.CreationBookingDto;
 import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.BookingStatus;
 import com.rentalplatform.entity.ListingEntity;
@@ -15,18 +15,10 @@ import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -35,24 +27,10 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Testcontainers
-public class BookingServiceIT {
-
-    private static final GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:7"))
-            .withExposedPorts(6379);
-
-    static {
-        redisContainer.start();
-    }
+public class BookingServiceIT extends AbstractRedisTest {
 
     @Autowired
     private BookingService bookingService;
-
-    @Autowired
-    private RedisCacheCleaner redisCacheCleaner;
 
     @Autowired
     private UserRepository userRepository;
@@ -67,15 +45,12 @@ public class BookingServiceIT {
     private CacheManager cacheManager;
 
     @Autowired
+    private RedisCacheCleaner redisCacheCleaner;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     private ValueOperations<String, String> redisOps;
-
-    @DynamicPropertySource
-    static void configureRedisProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", redisContainer::getHost);
-        registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
-    }
 
     @BeforeEach
     void setUp() {

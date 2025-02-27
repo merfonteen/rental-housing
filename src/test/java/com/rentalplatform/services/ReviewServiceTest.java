@@ -429,7 +429,7 @@ class ReviewServiceTest {
         when(reviewRepository.save(any(ReviewEntity.class))).thenReturn(reviewToUpdate);
         when(reviewDtoMapper.makeReviewDto(Objects.requireNonNull(reviewToUpdate))).thenReturn(expectedDto);
 
-        ReviewDto result = reviewService.editReviewDto(reviewId, updateReviewDto, username);
+        ReviewDto result = reviewService.editReview(reviewId, updateReviewDto, username);
 
         assertNotNull(result);
         assertEquals(expectedDto.getComment(), result.getComment());
@@ -448,7 +448,7 @@ class ReviewServiceTest {
 
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> reviewService.editReviewDto(reviewId, updateReviewDto, username));
+        assertThrows(NotFoundException.class, () -> reviewService.editReview(reviewId, updateReviewDto, username));
     }
 
     @Test
@@ -471,7 +471,7 @@ class ReviewServiceTest {
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.ofNullable(reviewToUpdate));
 
         Exception exception = assertThrows(BadRequestException.class, () ->
-                reviewService.editReviewDto(reviewId, updateReviewDto, username));
+                reviewService.editReview(reviewId, updateReviewDto, username));
 
         assertEquals("You are not authorized to edit this review", exception.getMessage());
     }

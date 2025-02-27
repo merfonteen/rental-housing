@@ -43,7 +43,7 @@ public class ReviewController {
     public ResponseEntity<ReviewDto> editReview(@PathVariable Long reviewId,
                                                 @Valid @RequestBody UpdateReviewDto reviewDto,
                                                 Principal principal) {
-        return ResponseEntity.ok(reviewService.editReviewDto(reviewId, reviewDto, principal.getName()));
+        return ResponseEntity.ok(reviewService.editReview(reviewId, reviewDto, principal.getName()));
     }
 
     @DeleteMapping("/{reviewId}")
