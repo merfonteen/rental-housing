@@ -1,4 +1,4 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
 import com.rentalplatform.controller.NotificationWebSocketController;
 import com.rentalplatform.dto.NotificationDto;
@@ -9,6 +9,7 @@ import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.mapper.NotificationDtoMapper;
 import com.rentalplatform.repository.NotificationRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.service.NotificationService;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

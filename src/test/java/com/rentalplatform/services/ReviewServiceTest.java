@@ -1,8 +1,8 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
-import com.rentalplatform.dto.CreationReviewDto;
+import com.rentalplatform.dto.creationDto.CreationReviewDto;
 import com.rentalplatform.dto.ReviewDto;
-import com.rentalplatform.dto.UpdateReviewDto;
+import com.rentalplatform.dto.updateDto.UpdateReviewDto;
 import com.rentalplatform.entity.*;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
@@ -11,6 +11,10 @@ import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.ReviewRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.service.EmailService;
+import com.rentalplatform.service.NotificationService;
+import com.rentalplatform.service.RatingService;
+import com.rentalplatform.service.ReviewService;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

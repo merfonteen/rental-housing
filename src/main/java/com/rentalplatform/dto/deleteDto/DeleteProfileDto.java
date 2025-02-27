@@ -1,4 +1,4 @@
-package com.rentalplatform.dto;
+package com.rentalplatform.dto.deleteDto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;

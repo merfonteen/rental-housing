@@ -1,8 +1,8 @@
 package com.rentalplatform.controller;
 
-import com.rentalplatform.dto.CreationReviewDto;
+import com.rentalplatform.dto.creationDto.CreationReviewDto;
 import com.rentalplatform.dto.ReviewDto;
-import com.rentalplatform.dto.UpdateReviewDto;
+import com.rentalplatform.dto.updateDto.UpdateReviewDto;
 import com.rentalplatform.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/reviews")

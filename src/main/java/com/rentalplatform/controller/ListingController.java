@@ -1,7 +1,7 @@
 package com.rentalplatform.controller;
 
-import com.rentalplatform.dto.CreationListingDto;
-import com.rentalplatform.dto.EditListingDto;
+import com.rentalplatform.dto.creationDto.CreationListingDto;
+import com.rentalplatform.dto.updateDto.EditListingDto;
 import com.rentalplatform.dto.FilterListingsDto;
 import com.rentalplatform.dto.ListingDto;
 import com.rentalplatform.service.ListingService;

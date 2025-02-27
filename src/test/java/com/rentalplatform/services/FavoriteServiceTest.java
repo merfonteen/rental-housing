@@ -1,4 +1,4 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
 import com.rentalplatform.dto.ListingDto;
 import com.rentalplatform.entity.FavoriteEntity;
@@ -10,6 +10,7 @@ import com.rentalplatform.mapper.ListingDtoMapper;
 import com.rentalplatform.repository.FavoriteRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.service.FavoriteService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

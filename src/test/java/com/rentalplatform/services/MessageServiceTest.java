@@ -1,4 +1,4 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
 import com.rentalplatform.controller.MessageWebSocketController;
 import com.rentalplatform.dto.MessageDto;
@@ -9,6 +9,7 @@ import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.mapper.MessageDtoMapper;
 import com.rentalplatform.repository.MessageRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.service.MessageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -1,6 +1,8 @@
 package com.rentalplatform.service;
 
 import com.rentalplatform.dto.*;
+import com.rentalplatform.dto.deleteDto.DeleteProfileDto;
+import com.rentalplatform.dto.updateDto.UpdateProfileDto;
 import com.rentalplatform.entity.RoleEntity;
 import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;

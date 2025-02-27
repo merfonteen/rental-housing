@@ -1,4 +1,4 @@
-package com.rentalplatform.dto;
+package com.rentalplatform.dto.creationDto;
 
 import com.rentalplatform.entity.ListingType;
 import jakarta.validation.constraints.NotBlank;

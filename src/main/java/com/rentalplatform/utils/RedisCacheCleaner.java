@@ -20,11 +20,11 @@ public class RedisCacheCleaner {
     }
 
     public void evictBookingCacheForUser(String username) {
-        evictCacheByPattern("bookings::" + username + "-*");
+        evictCacheByPattern("bookings::" + username + "_*");
     }
 
     public void evictBookingCacheForLandlord(String username) {
-        evictCacheByPattern("landlordBookings::" + username + "-*");
+        evictCacheByPattern("bookingsForLandlord::" + username + "_*");
     }
 
     public void evictNotificationCacheByUsername(String username) {
@@ -39,6 +39,7 @@ public class RedisCacheCleaner {
 
             while (cursor.hasNext()) {
                 byte[] key = cursor.next();
+                String redisKey = new String(key);
                 redisTemplate.delete(new String(key));
             }
 

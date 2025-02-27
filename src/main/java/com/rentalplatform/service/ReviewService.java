@@ -1,8 +1,8 @@
 package com.rentalplatform.service;
 
-import com.rentalplatform.dto.CreationReviewDto;
+import com.rentalplatform.dto.creationDto.CreationReviewDto;
 import com.rentalplatform.dto.ReviewDto;
-import com.rentalplatform.dto.UpdateReviewDto;
+import com.rentalplatform.dto.updateDto.UpdateReviewDto;
 import com.rentalplatform.entity.BookingStatus;
 import com.rentalplatform.entity.ListingEntity;
 import com.rentalplatform.entity.ReviewEntity;

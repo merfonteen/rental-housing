@@ -1,7 +1,8 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
 import com.rentalplatform.dto.BookingDto;
-import com.rentalplatform.dto.CreationBookingDto;
+import com.rentalplatform.dto.creationDto.CreationBookingDto;
+import com.rentalplatform.dto.PageDto;
 import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.BookingStatus;
 import com.rentalplatform.entity.ListingEntity;
@@ -12,6 +13,9 @@ import com.rentalplatform.mapper.BookingDtoMapper;
 import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.service.BookingService;
+import com.rentalplatform.service.EmailService;
+import com.rentalplatform.service.NotificationService;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -139,7 +143,7 @@ class BookingServiceTest {
                 .thenReturn(bookingPage);
         when(bookingDtoMapper.makeBookingDto(booking)).thenReturn(bookingDto);
 
-        Page<BookingDto> result = bookingService.getBookings(username, page, size);
+        PageDto<BookingDto> result = bookingService.getBookings(username, page, size);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
@@ -159,7 +163,7 @@ class BookingServiceTest {
         when(bookingRepository.findAllByTenantUsernameOrLandlordUsername(username, request))
                 .thenReturn(emptyPage);
 
-        Page<BookingDto> result = bookingService.getBookings(username, page, size);
+        PageDto<BookingDto> result = bookingService.getBookings(username, page, size);
 
         assertNotNull(result);
         assertEquals(0, result.getTotalElements());
@@ -204,7 +208,7 @@ class BookingServiceTest {
         when(bookingRepository.findAllByListingLandlordUsername(username, request)).thenReturn(bookingPage);
         when(bookingDtoMapper.makeBookingDto(booking)).thenReturn(bookingDto);
 
-        Page<BookingDto> result = bookingService.getBookingsForLandlord(username, page, size);
+        PageDto<BookingDto> result = bookingService.getBookingsForLandlord(username, page, size);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
@@ -223,7 +227,7 @@ class BookingServiceTest {
 
         when(bookingRepository.findAllByListingLandlordUsername(username, request)).thenReturn(emptyPage);
 
-        Page<BookingDto> result = bookingService.getBookingsForLandlord(username, page, size);
+        PageDto<BookingDto> result = bookingService.getBookingsForLandlord(username, page, size);
 
         assertNotNull(result);
         assertEquals(0, result.getTotalElements());
@@ -697,7 +701,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void testDeclineBookingByLandlord_BookingNotFound_ShouldThrowException() {
+    void testDeclineBookingByLandlord_WhenBookingNotFound_ShouldThrowException() {
         Long bookingId = 1L;
         String username = "landlordUser";
 
@@ -730,5 +734,28 @@ class BookingServiceTest {
                 bookingService.declineBookingByLandlord(bookingId, username));
 
         assertEquals("Only bookings with status 'PENDING' can be declined", exception.getMessage());
+    }
+
+    @Test
+    void testDeclineBookingByLandlord_WhenBookingIsNotForYourListing_ShouldThrowException() {
+        Long bookingId = 1L;
+        String username = "landlordUser";
+
+        ListingEntity listing = ListingEntity.builder()
+                .landlord(UserEntity.builder().username("Another Landlord").build())
+                .build();
+
+        BookingEntity booking = BookingEntity.builder()
+                .id(bookingId)
+                .listing(listing)
+                .status(BookingStatus.CONFIRMED)
+                .build();
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+
+        BadRequestException exception = assertThrows(BadRequestException.class, () ->
+                bookingService.declineBookingByLandlord(bookingId, username));
+
+        assertEquals("You cannot decline a booking that is not for your listing", exception.getMessage());
     }
 }

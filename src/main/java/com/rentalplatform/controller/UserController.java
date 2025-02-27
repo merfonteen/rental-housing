@@ -1,6 +1,8 @@
 package com.rentalplatform.controller;
 
 import com.rentalplatform.dto.*;
+import com.rentalplatform.dto.deleteDto.DeleteProfileDto;
+import com.rentalplatform.dto.updateDto.UpdateProfileDto;
 import com.rentalplatform.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

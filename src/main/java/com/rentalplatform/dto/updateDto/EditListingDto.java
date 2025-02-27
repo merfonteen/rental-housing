@@ -1,4 +1,4 @@
-package com.rentalplatform.dto;
+package com.rentalplatform.dto.updateDto;
 
 import com.rentalplatform.entity.ListingType;
 import lombok.Builder;

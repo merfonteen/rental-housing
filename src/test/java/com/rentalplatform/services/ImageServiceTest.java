@@ -1,4 +1,4 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
 import com.rentalplatform.config.AwsS3Config;
 import com.rentalplatform.dto.ImageDto;
@@ -9,6 +9,7 @@ import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.mapper.ImageDtoMapper;
 import com.rentalplatform.repository.ImageRepository;
 import com.rentalplatform.repository.ListingRepository;
+import com.rentalplatform.service.ImageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

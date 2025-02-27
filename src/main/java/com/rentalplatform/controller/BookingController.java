@@ -1,18 +1,16 @@
 package com.rentalplatform.controller;
 
 import com.rentalplatform.dto.BookingDto;
-import com.rentalplatform.dto.CreationBookingDto;
+import com.rentalplatform.dto.creationDto.CreationBookingDto;
+import com.rentalplatform.dto.PageDto;
 import com.rentalplatform.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Book;
 import java.security.Principal;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/bookings")
@@ -33,15 +31,15 @@ public class BookingController {
     }
 
     @GetMapping(MY_BOOKINGS)
-    public ResponseEntity<Page<BookingDto>> getBookings(Principal principal,
-                                                        @RequestParam(defaultValue = "0") int page,
-                                                        @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<PageDto<BookingDto>> getBookings(Principal principal,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(bookingService.getBookings(principal.getName(), page, size));
     }
 
     @PreAuthorize("hasRole('ROLE_LANDLORD')")
     @GetMapping(BOOKINGS_FOR_LANDLORD)
-    public ResponseEntity<Page<BookingDto>> getBookingsForLandlord(Principal principal,
+    public ResponseEntity<PageDto<BookingDto>> getBookingsForLandlord(Principal principal,
                                                                    @RequestParam(defaultValue = "0") int page,
                                                                    @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(bookingService.getBookingsForLandlord(principal.getName(), page, size));

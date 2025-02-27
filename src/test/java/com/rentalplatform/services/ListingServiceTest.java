@@ -1,7 +1,7 @@
-package com.rentalplatform.service;
+package com.rentalplatform.services;
 
-import com.rentalplatform.dto.CreationListingDto;
-import com.rentalplatform.dto.EditListingDto;
+import com.rentalplatform.dto.creationDto.CreationListingDto;
+import com.rentalplatform.dto.updateDto.EditListingDto;
 import com.rentalplatform.dto.FilterListingsDto;
 import com.rentalplatform.dto.ListingDto;
 import com.rentalplatform.entity.ListingEntity;
@@ -12,6 +12,7 @@ import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.mapper.ListingDtoMapper;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
+import com.rentalplatform.service.ListingService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

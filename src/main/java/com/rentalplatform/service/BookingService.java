@@ -1,7 +1,8 @@
 package com.rentalplatform.service;
 
 import com.rentalplatform.dto.BookingDto;
-import com.rentalplatform.dto.CreationBookingDto;
+import com.rentalplatform.dto.creationDto.CreationBookingDto;
+import com.rentalplatform.dto.PageDto;
 import com.rentalplatform.entity.BookingEntity;
 import com.rentalplatform.entity.BookingStatus;
 import com.rentalplatform.entity.ListingEntity;
@@ -15,13 +16,11 @@ import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Book;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -39,43 +38,44 @@ public class BookingService {
     private final NotificationService notificationService;
     private final RedisCacheCleaner redisCacheCleaner;
 
-    @Cacheable(cacheNames = "bookings", key = "#bookingId")
+    @Cacheable(cacheNames = "bookings", key = "#bookingId", unless = "#result == null")
     public BookingDto getBookingById(Long bookingId, String username) {
-        BookingEntity booking = findBookingById(bookingId);
+        BookingEntity booking = findBookingByIdOrThrowException(bookingId);
         
-        if(!username.equals(booking.getTenant().getUsername())) {
+        if(!username.equals(booking.getTenant().getUsername()) && !username.equals(booking.getListing().getLandlord().getUsername())) {
             throw new BadRequestException("You are not authorized to view this booking");
         }
         
         return bookingDtoMapper.makeBookingDto(booking);
     }
 
-    @Cacheable(cacheNames = "bookings", key = "#username + '_' + #page + '_' + #size")
-    public Page<BookingDto> getBookings(String username, int page, int size) {
+    @Cacheable(cacheNames = "bookings", key = "#username + '_' + #page + '_' + #size", unless = "#result.content.isEmpty()")
+    public PageDto<BookingDto> getBookings(String username, int page, int size) {
         if(size > 50) {
             throw new BadRequestException("Maximum page size is 50");
         }
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByTenantUsernameOrLandlordUsername(username, request);
-        return bookings.map(bookingDtoMapper::makeBookingDto);
+        return new PageDto<>(bookings.map(bookingDtoMapper::makeBookingDto));
     }
 
-    @Cacheable(cacheNames = "bookingsForLandlord", key = "#username + '_' + #page + '_' + #size")
-    public Page<BookingDto> getBookingsForLandlord(String username, int page, int size) {
+    @Cacheable(cacheNames = "bookingsForLandlord", key = "#username + '_' + #page + '_' + #size", unless = "#result.content.isEmpty()")
+    public PageDto<BookingDto> getBookingsForLandlord(String username, int page, int size) {
         if(size > 50) {
             throw new BadRequestException("Maximum page size is 50");
         }
         PageRequest request = PageRequest.of(page, size);
         Page<BookingEntity> bookings = bookingRepository.findAllByListingLandlordUsername(username, request);
-        return bookings.map(bookingDtoMapper::makeBookingDto);
+        return new PageDto<>(bookings.map(bookingDtoMapper::makeBookingDto));
     }
 
+    @Transactional
     public BookingDto createBooking(CreationBookingDto bookingDto, String username) {
         Instant startDateTime = bookingDto.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endDateTime = bookingDto.getEndDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        ListingEntity listingToBook = findListingByIdFromBookingDto(bookingDto);
-        UserEntity user = findUserByUsername(username);
+        ListingEntity listingToBook = findListingByIdOrThrowException(bookingDto.getListingId());
+        UserEntity user = findUserByUsernameOrThrowException(username);
 
         validateBookingCreation(listingToBook, user, startDateTime, endDateTime);
 
@@ -107,7 +107,7 @@ public class BookingService {
 
     @Transactional
     public BookingDto confirmBookingByLandlord(Long bookingId, String username) {
-        BookingEntity booking = findBookingById(bookingId);
+        BookingEntity booking = findBookingByIdOrThrowException(bookingId);
 
         if (!booking.getListing().getLandlord().getUsername().equals(username)) {
             throw new BadRequestException("You are not authorized to confirm this booking");
@@ -135,7 +135,11 @@ public class BookingService {
 
     @Transactional
     public BookingDto cancelBookingByTenant(Long bookingId, String username) {
-        BookingEntity booking = findBookingById(bookingId);
+        BookingEntity booking = findBookingByIdOrThrowException(bookingId);
+
+        if (!booking.getTenant().getUsername().equals(username)) {
+            throw new BadRequestException("You are not authorized to cancel this booking");
+        }
 
         if (booking.getStartDate().isBefore(Instant.now())) {
             throw new BadRequestException("You cannot cancel a booking already that has already started");
@@ -164,7 +168,11 @@ public class BookingService {
 
     @Transactional
     public BookingDto declineBookingByLandlord(Long bookingId, String username) {
-        BookingEntity booking = findBookingById(bookingId);
+        BookingEntity booking = findBookingByIdOrThrowException(bookingId);
+
+        if(!booking.getListing().getLandlord().getUsername().equals(username)) {
+            throw new BadRequestException("You cannot decline a booking that is not for your listing");
+        }
 
         validateBookingStatus(booking, "Only bookings with status 'PENDING' can be declined");
 
@@ -227,19 +235,18 @@ public class BookingService {
         }
     }
 
-    private BookingEntity findBookingById(Long bookingId) {
+    private BookingEntity findBookingByIdOrThrowException(Long bookingId) {
         return bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking with id '%d' not found".formatted(bookingId)));
     }
 
-    private UserEntity findUserByUsername(String username) {
+    private UserEntity findUserByUsernameOrThrowException(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
     }
 
-    private ListingEntity findListingByIdFromBookingDto(CreationBookingDto bookingDto) {
-        return listingRepository.findById(bookingDto.getListingId())
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
-                        formatted(bookingDto.getListingId())));
+    private ListingEntity findListingByIdOrThrowException(Long listingId) {
+        return listingRepository.findById(listingId)
+                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
     }
 }
