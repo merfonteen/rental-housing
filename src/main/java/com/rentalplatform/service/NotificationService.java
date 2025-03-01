@@ -28,23 +28,25 @@ public class NotificationService {
     private final RedisCacheCleaner redisCacheCleaner;
     private final NotificationWebSocketController notificationWebSocketController;
 
-    @Cacheable(cacheNames = "notifications", key = "#notificationId")
+    @Cacheable(cacheNames = "notifications", key = "#notificationId", unless = "#result = null")
     public NotificationDto getNotificationById(Long notificationId, String username) {
         NotificationEntity notification = findNotificationByIdOrThrowException(notificationId);
 
-        if(!username.equals(notification.getUser().getUsername())) {
+        if (!username.equals(notification.getUser().getUsername())) {
             throw new BadRequestException("You are not authorized to view this notification");
         }
 
         return notificationDtoMapper.makeNotificationDto(notification);
     }
 
-    @Cacheable(cacheNames = "notifications", key = "#username + '_' + #page + '_' + #size")
+    @Cacheable(cacheNames = "notifications",
+            key = "#username + '_' + #page + '_' + #size",
+            unless = "#result.content.isEmpty()")
     public Page<NotificationDto> getAllNotifications(String username, int page, int size) {
         UserEntity currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
 
-        if(size > 50) {
+        if (size > 50) {
             throw new BadRequestException("Maximum page size is 50");
         }
 
@@ -54,12 +56,14 @@ public class NotificationService {
         return notifications.map(notificationDtoMapper::makeNotificationDto);
     }
 
-    @Cacheable(cacheNames = "unreadNotifications", key = "#username + '_' + #page + '_' + #size")
+    @Cacheable(cacheNames = "unreadNotifications",
+            key = "#username + '_' + #page + '_' + #size",
+            unless = "#result.content.isEmpty()")
     public Page<NotificationDto> getUnreadNotifications(String username, int page, int size) {
         UserEntity currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User '%s' not found".formatted(username)));
 
-        if(size > 50) {
+        if (size > 50) {
             throw new BadRequestException("Maximum page size is 50");
         }
 
@@ -80,6 +84,7 @@ public class NotificationService {
 
         notificationRepository.save(notification);
         redisCacheCleaner.evictNotificationCacheByUsername(user.getUsername());
+        redisCacheCleaner.evictUnreadNotificationsCacheByUsername(user.getUsername());
         notificationWebSocketController.sendNotification(user.getUsername(), message);
     }
 
@@ -88,6 +93,7 @@ public class NotificationService {
         NotificationEntity notification = findNotificationByIdOrThrowException(notificationId);
         notification.setRead(true);
         redisCacheCleaner.evictNotificationCacheByUsername(notification.getUser().getUsername());
+        redisCacheCleaner.evictUnreadNotificationsCacheByUsername(notification.getUser().getUsername());
     }
 
     private NotificationEntity findNotificationByIdOrThrowException(Long notificationId) {

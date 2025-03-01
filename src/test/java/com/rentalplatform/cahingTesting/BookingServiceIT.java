@@ -11,12 +11,10 @@ import com.rentalplatform.repository.BookingRepository;
 import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.service.BookingService;
-import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
@@ -40,12 +38,6 @@ public class BookingServiceIT extends AbstractRedisTest {
 
     @Autowired
     private ListingRepository listingRepository;
-
-    @Autowired
-    private CacheManager cacheManager;
-
-    @Autowired
-    private RedisCacheCleaner redisCacheCleaner;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -163,7 +155,7 @@ public class BookingServiceIT extends AbstractRedisTest {
     @Transactional
     void testConfirmBookingByLandlord_ShouldEvictCache() {
         BookingEntity testBooking = createTestBookingForLandlord("landlordUsername");
-        prepareTestCacheEviction(testBooking.getId(),
+        performTestCacheEviction(testBooking.getId(),
                 testBooking.getTenant().getUsername(),
                 testBooking.getListing().getLandlord().getUsername(),
                 (bookingId) -> bookingService.confirmBookingByLandlord(bookingId,
@@ -174,7 +166,7 @@ public class BookingServiceIT extends AbstractRedisTest {
     @Transactional
     void testCancelBookingByTenant_ShouldEvictCache() {
         BookingEntity testBooking = createTestBookingForLandlord("landlordUsername");
-        prepareTestCacheEviction(testBooking.getId(),
+        performTestCacheEviction(testBooking.getId(),
                 testBooking.getTenant().getUsername(),
                 testBooking.getListing().getLandlord().getUsername(),
                 (bookingId) -> bookingService.cancelBookingByTenant(bookingId, testBooking.getTenant().getUsername()));
@@ -184,14 +176,14 @@ public class BookingServiceIT extends AbstractRedisTest {
     @Transactional
     void testDeclineBookingByLandlord_ShouldEvictCache() {
         BookingEntity testBooking = createTestBookingForLandlord("landlordUsername");
-        prepareTestCacheEviction(testBooking.getId(),
+        performTestCacheEviction(testBooking.getId(),
                 testBooking.getTenant().getUsername(),
                 testBooking.getListing().getLandlord().getUsername(),
                 (bookingId) -> bookingService.declineBookingByLandlord(bookingId,
                         testBooking.getListing().getLandlord().getUsername()));
     }
 
-    public void prepareTestCacheEviction(Long bookingId, String tenantUsername, String landlordUsername,
+    public void performTestCacheEviction(Long bookingId, String tenantUsername, String landlordUsername,
                                          Consumer<Long> bookingAction) {
         int page = 0;
         int size = 10;

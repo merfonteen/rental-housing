@@ -31,6 +31,11 @@ public class RedisCacheCleaner {
         evictCacheByPattern("notifications::" + username + "_*");
     }
 
+    public void evictUnreadNotificationsCacheByUsername(String username) {
+        evictCacheByPattern("unreadNotifications::" + username + "_*");
+    }
+
+
     public void evictCacheByPattern(String pattern) {
         RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
 
@@ -40,7 +45,7 @@ public class RedisCacheCleaner {
             while (cursor.hasNext()) {
                 byte[] key = cursor.next();
                 String redisKey = new String(key);
-                redisTemplate.delete(new String(key));
+                redisTemplate.delete(redisKey);
             }
 
         } catch (Exception e) {

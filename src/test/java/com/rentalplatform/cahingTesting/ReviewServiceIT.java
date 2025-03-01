@@ -8,12 +8,10 @@ import com.rentalplatform.repository.ListingRepository;
 import com.rentalplatform.repository.ReviewRepository;
 import com.rentalplatform.repository.UserRepository;
 import com.rentalplatform.service.ReviewService;
-import com.rentalplatform.utils.RedisCacheCleaner;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
@@ -37,12 +35,6 @@ public class ReviewServiceIT extends AbstractRedisTest {
 
     @Autowired
     private ListingRepository listingRepository;
-
-    @Autowired
-    private RedisCacheCleaner redisCacheCleaner;
-
-    @Autowired
-    private CacheManager cacheManager;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -89,7 +81,7 @@ public class ReviewServiceIT extends AbstractRedisTest {
                 .rating(9.0)
                 .build();
 
-        prepareTestCacheEviction(review, (reviewId) -> reviewService.createReview(dto, review.getTenant().getUsername()));
+        performTestCacheEviction(review, (reviewId) -> reviewService.createReview(dto, review.getTenant().getUsername()));
     }
 
     @Test
@@ -101,7 +93,7 @@ public class ReviewServiceIT extends AbstractRedisTest {
                 .rating(5.0)
                 .build();
 
-        prepareTestCacheEviction(review, (reviewId) ->
+        performTestCacheEviction(review, (reviewId) ->
                 reviewService.editReview(reviewId, dto, review.getTenant().getUsername()));
     }
 
@@ -109,10 +101,10 @@ public class ReviewServiceIT extends AbstractRedisTest {
     @Transactional
     void testDeleteReview_ShouldEvictCache() {
         ReviewEntity review = createTestReviewForUser("tenantUsername");
-        prepareTestCacheEviction(review, (reviewId) -> reviewService.deleteReview(reviewId, review.getTenant().getUsername()));
+        performTestCacheEviction(review, (reviewId) -> reviewService.deleteReview(reviewId, review.getTenant().getUsername()));
     }
 
-    private void prepareTestCacheEviction(ReviewEntity review, Consumer<Long> reviewAction) {
+    private void performTestCacheEviction(ReviewEntity review, Consumer<Long> reviewAction) {
         int page = 0;
         int size = 10;
         String cacheKey = "reviews::" + review.getListing().getId() + "_" + false + "_" + false + "_" + page + "_" + size;
