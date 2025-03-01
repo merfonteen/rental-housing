@@ -146,7 +146,7 @@ class MessageServiceTest {
         List<MessageDto> messageDtos = new ArrayList<>(List.of(messageDto));
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(messageRepository.findAllByUsername(username)).thenReturn(messages);
+        when(messageRepository.findAllByReceiverUsername(username)).thenReturn(messages);
         when(messageDtoMapper.makeMessageDto(messages)).thenReturn(messageDtos);
 
         List<MessageDto> result = messageService.getAllMessages(username);
@@ -154,7 +154,7 @@ class MessageServiceTest {
         assertNotNull(result);
         assertEquals(messageDto.getContent(), result.get(0).getContent());
         verify(messageDtoMapper, times(1)).makeMessageDto(messages);
-        verify(messageRepository, times(1)).findAllByUsername(username);
+        verify(messageRepository, times(1)).findAllByReceiverUsername(username);
         verify(userRepository, times(1)).findByUsername(username);
     }
 

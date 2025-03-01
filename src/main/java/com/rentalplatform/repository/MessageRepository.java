@@ -13,7 +13,7 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
     List<MessageEntity> findAllBySenderIdAndReceiverId(Long senderId, Long receiverId);
 
     @Query("SELECT m FROM MessageEntity m WHERE m.receiver.username = :username")
-    List<MessageEntity> findAllByUsername(@Param("username") String username);
+    List<MessageEntity> findAllByReceiverUsername(@Param("username") String username);
 
     @Query("SELECT m FROM MessageEntity m WHERE m.receiver.id = :receiverId AND m.isRead = false")
     List<MessageEntity> findAllByReceiverIdAndIsReadFalse(@Param("receiverId") Long receiverId);

@@ -35,13 +35,13 @@ public class MessageService {
                 messageRepository.findAllBySenderIdAndReceiverId(sender.getId(), receiver.getId()));
     }
 
-    @Cacheable(cacheNames = "messages", key = "#username")
+    @Cacheable(cacheNames = "messages", key = "#username", unless = "#result.isEmpty()")
     public List<MessageDto> getAllMessages(String username) {
         findUserByUsernameOrThrowException(username);
-        return messageDtoMapper.makeMessageDto(messageRepository.findAllByUsername(username));
+        return messageDtoMapper.makeMessageDto(messageRepository.findAllByReceiverUsername(username));
     }
 
-    @Cacheable(cacheNames = "unreadMessages", key = "#username")
+    @Cacheable(cacheNames = "unreadMessages", key = "#username", unless = "#result.isEmpty()")
     public List<MessageDto> getUnreadMessages(String username) {
         UserEntity user = findUserByUsernameOrThrowException(username);
         return messageDtoMapper.makeMessageDto(messageRepository.findAllByReceiverIdAndIsReadFalse(user.getId()));
@@ -76,8 +76,8 @@ public class MessageService {
         }
 
         message.setRead(true);
-        MessageEntity savedMessage = messageRepository.save(message);
 
+        MessageEntity savedMessage = messageRepository.save(message);
         return messageDtoMapper.makeMessageDto(savedMessage);
     }
 

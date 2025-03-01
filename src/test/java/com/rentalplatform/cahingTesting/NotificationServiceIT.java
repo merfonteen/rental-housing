@@ -15,7 +15,6 @@ import org.springframework.data.redis.core.ValueOperations;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.not;
 
 public class NotificationServiceIT extends AbstractRedisTest {
 
