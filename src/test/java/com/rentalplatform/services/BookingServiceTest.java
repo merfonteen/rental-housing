@@ -487,7 +487,7 @@ class BookingServiceTest {
         assertEquals(expectedDto.getStatus(), result.getStatus());
 
         verify(bookingRepository, times(1)).save(any(BookingEntity.class));
-        verify(redisCacheCleaner, times(1)).evictCacheByPattern("bookings::" + bookingId);
+        verify(redisCacheCleaner, times(1)).evictBookingCacheById(bookingId);
         verify(redisCacheCleaner, times(1)).evictBookingCacheForUser(booking.getTenant().getUsername());
         verify(redisCacheCleaner, times(1)).evictBookingCacheForLandlord(username);
         verify(emailService, times(1)).sendEmail(
@@ -601,7 +601,7 @@ class BookingServiceTest {
         assertEquals(expectedDto.getStatus(), result.getStatus());
 
         verify(bookingRepository, times(1)).save(any(BookingEntity.class));
-        verify(redisCacheCleaner, times(1)).evictCacheByPattern("bookings::" + bookingId);
+        verify(redisCacheCleaner, times(1)).evictBookingCacheById(bookingId);
         verify(redisCacheCleaner, times(1)).evictBookingCacheForUser(username);
         verify(redisCacheCleaner, times(1)).evictBookingCacheForLandlord(landlord.getUsername());
         verify(emailService, times(1)).sendEmail(
@@ -686,7 +686,7 @@ class BookingServiceTest {
         assertEquals(expectedDto.getStatus(), result.getStatus());
 
         verify(bookingRepository, times(1)).save(any(BookingEntity.class));
-        verify(redisCacheCleaner, times(1)).evictCacheByPattern("bookings::" + bookingId);
+        verify(redisCacheCleaner, times(1)).evictBookingCacheById(bookingId);
         verify(redisCacheCleaner, times(1)).evictBookingCacheForUser(booking.getTenant().getUsername());
         verify(redisCacheCleaner, times(1)).evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
         verify(emailService, times(1)).sendEmail(

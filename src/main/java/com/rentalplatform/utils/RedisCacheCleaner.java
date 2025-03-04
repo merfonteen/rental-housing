@@ -23,6 +23,10 @@ public class RedisCacheCleaner {
         evictCacheByPattern("bookings::" + username + "_*");
     }
 
+    public void evictBookingCacheById(Long bookingId) {
+        evictCacheByPattern("bookings::" + bookingId);
+    }
+
     public void evictBookingCacheForLandlord(String landlordUsername) {
         evictCacheByPattern("bookingsForLandlord::" + landlordUsername + "_*");
     }
@@ -35,8 +39,7 @@ public class RedisCacheCleaner {
         evictCacheByPattern("unreadNotifications::" + username + "_*");
     }
 
-
-    public void evictCacheByPattern(String pattern) {
+    private void evictCacheByPattern(String pattern) {
         RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
 
         try (Cursor<byte[]> cursor = connection.scan(

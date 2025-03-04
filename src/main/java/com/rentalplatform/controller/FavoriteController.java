@@ -31,9 +31,9 @@ public class FavoriteController {
         return ResponseEntity.ok(favoriteService.addToFavorites(listingId, principal.getName()));
     }
 
-    @DeleteMapping("/{listingId}")
-    public ResponseEntity<String> removeFromFavorites(@PathVariable Long listingId, Principal principal) {
-        favoriteService.removeFromFavorites(listingId, principal.getName());
+    @DeleteMapping("/{favoriteId}")
+    public ResponseEntity<String> removeFromFavorites(@PathVariable Long favoriteId, Principal principal) {
+        favoriteService.removeFromFavorites(favoriteId, principal.getName());
         return ResponseEntity.ok("Listing has been deleted successfully");
     }
 }

@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,13 +28,13 @@ public class FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final ListingDtoMapper listingDtoMapper;
 
+    @Cacheable(cacheNames = "favoriteListings", key = "#favoriteId", unless = "#result == null")
     public ListingDto getFavoriteById(Long favoriteId) {
-        FavoriteEntity favorite = favoriteRepository.findById(favoriteId)
-                .orElseThrow(() -> new NotFoundException("Favorite listing with id '%d' not found".formatted(favoriteId)));
+        FavoriteEntity favorite = getFavoriteListingByIdOrThrowException(favoriteId);
         return listingDtoMapper.makeListingDto(favorite.getListing());
     }
 
-    @Cacheable(cacheNames = "favoriteListings", key = "#username")
+    @Cacheable(cacheNames = "favoriteListings", key = "#username", unless = "#result.isEmpty()")
     public List<ListingDto> getFavoriteListings(String username) {
         UserEntity user = findUserByUsernameOrThrowException(username);
 
@@ -66,16 +67,24 @@ public class FavoriteService {
         return listingDtoMapper.makeListingDto(listingToAdd);
     }
 
-    @CacheEvict(cacheNames = "favoriteListings", key = "#username")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "favoriteListings", key = "#username"),
+            @CacheEvict(cacheNames = "favoriteListings", key = "#favoriteId")
+    })
     @Transactional
-    public void removeFromFavorites(Long listingId, String username) {
-        findListingByIdOrThrowException(listingId);
-        UserEntity user = findUserByUsernameOrThrowException(username);
+    public void removeFromFavorites(Long favoriteId, String username) {
+        FavoriteEntity favorite = getFavoriteListingByIdOrThrowException(favoriteId);
 
-        favoriteRepository.findByUserIdAndListingId(user.getId(), listingId)
-                .ifPresentOrElse(favoriteRepository::delete, () -> {
-                    throw new BadRequestException("Listing not found in your favorites");
-                });
+        if (!favorite.getUser().getUsername().equals(username)) {
+            throw new BadRequestException("You are not authorized to remove this listing from favorites");
+        }
+
+        favoriteRepository.delete(favorite);
+    }
+
+    private FavoriteEntity getFavoriteListingByIdOrThrowException(Long favoriteId) {
+        return favoriteRepository.findById(favoriteId)
+                .orElseThrow(() -> new NotFoundException("Favorite listing with id '%d' not found".formatted(favoriteId)));
     }
 
     private UserEntity findUserByUsernameOrThrowException(String username) {

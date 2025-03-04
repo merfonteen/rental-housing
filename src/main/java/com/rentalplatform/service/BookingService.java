@@ -118,7 +118,7 @@ public class BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
 
-        redisCacheCleaner.evictCacheByPattern("bookings::" + bookingId);
+        redisCacheCleaner.evictBookingCacheById(bookingId);
         redisCacheCleaner.evictBookingCacheForUser(booking.getTenant().getUsername());
         redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
@@ -151,7 +151,7 @@ public class BookingService {
 
         bookingRepository.save(booking);
 
-        redisCacheCleaner.evictCacheByPattern("bookings::" + bookingId);
+        redisCacheCleaner.evictBookingCacheById(bookingId);
         redisCacheCleaner.evictBookingCacheForUser(username);
         redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
@@ -180,7 +180,7 @@ public class BookingService {
 
         bookingRepository.save(booking);
 
-        redisCacheCleaner.evictCacheByPattern("bookings::" + bookingId);
+        redisCacheCleaner.evictBookingCacheById(bookingId);
         redisCacheCleaner.evictBookingCacheForUser(booking.getTenant().getUsername());
         redisCacheCleaner.evictBookingCacheForLandlord(booking.getListing().getLandlord().getUsername());
 
