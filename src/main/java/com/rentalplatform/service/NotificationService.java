@@ -89,8 +89,13 @@ public class NotificationService {
     }
 
     @CacheEvict(cacheNames = "notifications", key = "#notificationId")
-    public void markAsRead(Long notificationId) {
+    public void markAsRead(Long notificationId, String username) {
         NotificationEntity notification = findNotificationByIdOrThrowException(notificationId);
+
+        if(!notification.getUser().getUsername().equals(username)) {
+            throw new BadRequestException("You are not authorized to change this notification");
+        }
+
         notification.setRead(true);
         redisCacheCleaner.evictNotificationCacheByUsername(notification.getUser().getUsername());
         redisCacheCleaner.evictUnreadNotificationsCacheByUsername(notification.getUser().getUsername());

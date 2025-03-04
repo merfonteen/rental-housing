@@ -28,7 +28,7 @@ public class ListingService {
     private final ListingDtoMapper listingDtoMapper;
 
     public ListingDto getListingById(Long listingId) {
-        ListingEntity listing = findListingById(listingId);
+        ListingEntity listing = findListingByIdOrThrowException(listingId);
         return listingDtoMapper.makeListingDto(listing);
     }
 
@@ -97,26 +97,22 @@ public class ListingService {
 
     @Transactional
     public ListingDto editListing(Long listingId, EditListingDto editListingDto, String currentUsername) {
-        ListingEntity listing = findListingById(listingId);
-
+        ListingEntity listing = findListingByIdOrThrowException(listingId);
         validateUpdatingListing(editListingDto, currentUsername, listing);
-
         ListingEntity updatedListing = listingRepository.save(listing);
-
         return listingDtoMapper.makeListingDto(updatedListing);
     }
 
     @Transactional
     public void deleteListing(Long listingId, String currentUsername) {
-        ListingEntity listing = findListingById(listingId);
+        ListingEntity listing = findListingByIdOrThrowException(listingId);
         validateLandlordListing(currentUsername, listing);
         listingRepository.delete(listing);
     }
 
-    private ListingEntity findListingById(Long listingId) {
+    private ListingEntity findListingByIdOrThrowException(Long listingId) {
         return listingRepository.findById(listingId)
-                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".
-                        formatted(listingId)));
+                .orElseThrow(() -> new NotFoundException("Listing with id '%d' not found".formatted(listingId)));
     }
 
     private static void validateUpdatingListing(EditListingDto editListingDto, String currentUsername, ListingEntity listing) {

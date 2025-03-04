@@ -35,9 +35,9 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getAllNotifications(principal.getName(), page, size));
     }
 
-    @PatchMapping("/read/{id}")
-    public ResponseEntity<String> markAsRead(@PathVariable Long id) {
-        notificationService.markAsRead(id);
+    @PatchMapping("/read/{notificationId}")
+    public ResponseEntity<String> markAsRead(@PathVariable Long notificationId, Principal principal) {
+        notificationService.markAsRead(notificationId, principal.getName());
         return ResponseEntity.ok("Notification marked as read");
     }
 }

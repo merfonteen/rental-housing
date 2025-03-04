@@ -68,9 +68,13 @@ public class ImageService {
     }
 
     @Transactional
-    public void deleteFile(Long listingId, String filename) {
+    public void deleteFile(Long listingId, String filename, String username) {
         ListingEntity listing = findListingByIdOrThrowException(listingId);
         ImageEntity imageToDelete = findImageByFilenameOrThrowException(filename);
+
+        if(!listing.getLandlord().getUsername().equals(username)) {
+            throw new BadRequestException("You are not authorized to delete this file");
+        }
 
         if(!listing.getImages().contains(imageToDelete)) {
             throw new BadRequestException("Listing with id '%d' doesn't contain image with filename '%s'"
