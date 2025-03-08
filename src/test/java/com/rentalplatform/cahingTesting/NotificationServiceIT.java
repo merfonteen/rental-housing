@@ -109,7 +109,7 @@ public class NotificationServiceIT extends AbstractRedisTest {
 
         performCacheEvictionTest(
                 cachesToEvict,
-                () -> notificationService.markAsRead(notification.getId())
+                () -> notificationService.markAsRead(notification.getId(), notification.getUser().getUsername())
         );
     }
 

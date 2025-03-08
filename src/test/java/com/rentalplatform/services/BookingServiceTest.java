@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.userdetails.User;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -105,12 +106,22 @@ class BookingServiceTest {
     void testGetBookingById_WhenUnauthorized_ShouldThrowException() {
         Long bookingId = 1L;
         String username = "Unauthorized User";
-        UserEntity user = new UserEntity();
-        user.setUsername("tenantUser");
+
+        UserEntity tenant = new UserEntity();
+        tenant.setUsername("tenantUser");
+
+        UserEntity landlord = new UserEntity();
+        landlord.setUsername("landlord");
+
+        ListingEntity listing = ListingEntity.builder()
+                .title("Test Title")
+                .landlord(landlord)
+                .build();
 
         BookingEntity booking = BookingEntity.builder()
                 .id(bookingId)
-                .tenant(user)
+                .tenant(tenant)
+                .listing(listing)
                 .build();
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
@@ -632,6 +643,7 @@ class BookingServiceTest {
 
         BookingEntity booking = BookingEntity.builder()
                 .id(bookingId)
+                .tenant(UserEntity.builder().username(username).build())
                 .startDate(Instant.now().minusSeconds(86400)) // 1 day
                 .build();
 

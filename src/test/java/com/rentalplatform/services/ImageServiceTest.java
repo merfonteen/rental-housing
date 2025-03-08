@@ -4,6 +4,7 @@ import com.rentalplatform.config.AwsS3Config;
 import com.rentalplatform.dto.ImageDto;
 import com.rentalplatform.entity.ImageEntity;
 import com.rentalplatform.entity.ListingEntity;
+import com.rentalplatform.entity.UserEntity;
 import com.rentalplatform.exception.BadRequestException;
 import com.rentalplatform.exception.NotFoundException;
 import com.rentalplatform.mapper.ImageDtoMapper;
@@ -230,6 +231,7 @@ class ImageServiceTest {
     void testDeleteFile_Success() {
         Long listingId = 1L;
         String filename = "test-image.jpg";
+        String username = "testUser";
 
         ImageEntity image = ImageEntity.builder()
                 .id(1L)
@@ -239,12 +241,13 @@ class ImageServiceTest {
         ListingEntity listing = ListingEntity.builder()
                 .id(listingId)
                 .images(new ArrayList<>(List.of(image)))
+                .landlord(UserEntity.builder().username(username).build())
                 .build();
 
         when(listingRepository.findById(listingId)).thenReturn(Optional.ofNullable(listing));
         when(imageRepository.findByFilename(filename)).thenReturn(Optional.of(image));
 
-        imageService.deleteFile(listingId, filename);
+        imageService.deleteFile(listingId, filename, username);
 
         verify(imageRepository, times(1)).delete(image);
         verify(s3Client, times(1)).deleteObject(any(Consumer.class));
@@ -254,19 +257,21 @@ class ImageServiceTest {
     void testDeleteFile_WhenListingNotFound_ShouldThrowException() {
         Long listingId = 1L;
         String filename = "test-image.jpg";
+        String username = "testUser";
 
         when(listingRepository.findById(listingId)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> imageService.deleteFile(listingId, filename));
+                () -> imageService.deleteFile(listingId, filename, username));
 
         assertEquals("Listing with id '1' not found", exception.getMessage());
     }
 
     @Test
-    void testDeleteFile_ImageNotFound() {
+    void testDeleteFile_WhenImageNotFound_ShouldThrowException() {
         Long listingId = 1L;
         String filename = "test-image.jpg";
+        String username = "testUser";
 
         ListingEntity listing = ListingEntity.builder()
                 .id(listingId)
@@ -276,7 +281,7 @@ class ImageServiceTest {
         when(imageRepository.findByFilename(filename)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> imageService.deleteFile(listingId, filename));
+                () -> imageService.deleteFile(listingId, filename, username));
 
         assertEquals("Image with filename 'test-image.jpg' not found", exception.getMessage());
     }
@@ -285,10 +290,12 @@ class ImageServiceTest {
     void testDeleteFile_WhenImageNotInListing_ShouldThrowException() {
         Long listingId = 1L;
         String filename = "test-image.jpg";
+        String username = "testUser";
 
         ListingEntity listing = ListingEntity.builder()
                 .id(listingId)
                 .images(new ArrayList<>())
+                .landlord(UserEntity.builder().username(username).build())
                 .build();
 
         ImageEntity image = ImageEntity.builder()
@@ -300,7 +307,7 @@ class ImageServiceTest {
         when(imageRepository.findByFilename(filename)).thenReturn(Optional.of(image));
 
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> imageService.deleteFile(listingId, filename));
+                () -> imageService.deleteFile(listingId, filename, username));
 
         assertEquals("Listing with id '1' doesn't contain image with filename 'test-image.jpg'", exception.getMessage());
     }

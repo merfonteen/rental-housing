@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -225,13 +226,8 @@ class FavoriteServiceTest {
 
     @Test
     void testRemoveFromFavorites_Success() {
-        Long listingId = 1L;
+        Long favoriteListingId = 1L;
         String username = "Test Username";
-
-        ListingEntity listing = ListingEntity.builder()
-                .id(listingId)
-                .title("Test Listing")
-                .build();
 
         UserEntity user = UserEntity.builder()
                 .id(10L)
@@ -241,49 +237,44 @@ class FavoriteServiceTest {
         FavoriteEntity favorite = FavoriteEntity.builder()
                 .id(100L)
                 .user(user)
-                .listing(listing)
                 .build();
 
-        when(listingRepository.findById(listingId)).thenReturn(Optional.of(listing));
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(favoriteRepository.findByUserIdAndListingId(user.getId(), listingId))
-                .thenReturn(Optional.of(favorite));
+        when(favoriteRepository.findById(favoriteListingId)).thenReturn(Optional.ofNullable(favorite));
 
-        favoriteService.removeFromFavorites(listingId, username);
+        favoriteService.removeFromFavorites(favoriteListingId, username);
 
         verify(favoriteRepository, times(1)).delete(favorite);
-        verify(favoriteRepository, times(1)).findByUserIdAndListingId(user.getId(), listingId);
+        verify(favoriteRepository, times(1)).findById(favoriteListingId);
     }
 
     @Test
-    void testRemoveFromFavorites_WhenListingNotFound_ShouldThrowException() {
+    void testRemoveFromFavorites_WhenFavoriteListingNotFound_ShouldThrowException() {
         Long listingId = 1L;
         String username = "Test Username";
 
-        when(listingRepository.findById(listingId)).thenReturn(Optional.empty());
+        when(favoriteRepository.findById(listingId)).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class,
+        Exception exception = assertThrows(NotFoundException.class,
                 () -> favoriteService.removeFromFavorites(listingId, username));
 
-        assertEquals("Listing with id '1' not found", exception.getMessage());
+        assertEquals("Favorite listing with id '1' not found", exception.getMessage());
     }
 
     @Test
-    void testRemoveFromFavorites_WhenUserNotFound_ShouldThrowException() {
-        Long listingId = 1L;
+    void testRemoveFromFavorites_WhenUnauthorized_ShouldThrowException() {
+        Long favoriteListingId = 1L;
         String username = "Test Username";
 
-        ListingEntity listing = ListingEntity.builder()
-                .id(listingId)
-                .title("Test Listing")
+        FavoriteEntity favoriteListing = FavoriteEntity.builder()
+                .id(favoriteListingId)
+                .user(UserEntity.builder().username("anotherUser").build())
                 .build();
 
-        when(listingRepository.findById(listingId)).thenReturn(Optional.of(listing));
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+        when(favoriteRepository.findById(favoriteListingId)).thenReturn(Optional.of(favoriteListing));
 
-        NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> favoriteService.removeFromFavorites(listingId, username));
+        Exception exception = assertThrows(BadRequestException.class,
+                () -> favoriteService.removeFromFavorites(favoriteListingId, username));
 
-        assertEquals("User 'Test Username' not found", exception.getMessage());
+        assertEquals("You are not authorized to remove this listing from favorites", exception.getMessage());
     }
 }

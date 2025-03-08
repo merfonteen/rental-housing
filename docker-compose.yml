@@ -1,0 +1,58 @@
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rental_platform
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: ${DOCKER_DATABASE_URL}
+      SPRING_DATASOURCE_USERNAME: ${DOCKER_DATABASE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DOCKER_DATABASE_PASSWORD}
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_TIME_MILLIS: ${JWT_EXPIRATION_TIME_MILLIS}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION}
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: rental_db
+      POSTGRES_USER: rental_user
+      POSTGRES_PASSWORD: rental_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7
+    container_name: redis-db
+    environment:
+      REDIS_PORT: 6379
+    ports:
+      - "6380:6379"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

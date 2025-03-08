@@ -341,7 +341,7 @@ class NotificationServiceTest {
 
         when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
 
-        notificationService.markAsRead(notificationId);
+        notificationService.markAsRead(notificationId, username);
 
         assertTrue(notification.isRead());
         verify(redisCacheCleaner, times(1)).evictNotificationCacheByUsername(username);
@@ -350,11 +350,12 @@ class NotificationServiceTest {
     @Test
     void testMarkAsRead_WhenNotificationNotFound_ShouldThrowException() {
         Long notificationId = 1L;
+        String username = "Test Username";
 
         when(notificationRepository.findById(notificationId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(NotFoundException.class, () ->
-                notificationService.markAsRead(notificationId));
+                notificationService.markAsRead(notificationId, username));
 
         assertEquals("Notification with id '1' not found", exception.getMessage());
     }

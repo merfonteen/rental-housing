@@ -21,7 +21,7 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      port: 6379
       repositories:
         enabled: false
   mail:
@@ -37,8 +37,8 @@ spring:
   cloud:
     aws:
       credentials:
-        access-key: ${AWS-ACCESS-KEY}
-        secret-key: ${AWS-SECRET-KEY}
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
       region:
         static: ${AWS_REGION}
       s3:

@@ -1,5 +1,6 @@
 package com.rentalplatform.security;
 
+import com.rentalplatform.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -18,10 +19,9 @@ public class JwtTokenUtil {
     private final Key SECRET_KEY;
     private final long EXPIRATION_TIME;
 
-    public JwtTokenUtil(@Value("${jwt.secret}") String secret,
-                        @Value("${jwt.expiration}") long expiration) {
-        this.SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
-        this.EXPIRATION_TIME = expiration;
+    public JwtTokenUtil(JwtConfig jwtConfig) {
+        this.SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtConfig.getSecret()));
+        this.EXPIRATION_TIME = jwtConfig.getExpiration();
     }
 
     public String generateToken(UserDetails userDetails) {
