@@ -11,6 +11,7 @@ A platform for publishing rental housing listings. Tenants can book accomodation
   - Security(JWT)
 - **PostgreSQL**
 - **Redis**
+- **Hibernate**
 - **AWS S3**
 - **Maven**
 - **JUnit and Mockito**
