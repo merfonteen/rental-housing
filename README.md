@@ -20,10 +20,10 @@ A platform for publishing rental housing listings. Tenants can book accomodation
 ## Installation and setup
 
 1. **Clone the repository**
-  ```bash
+   ```bash
     htpps://github.com/merfonteen/rental-housing.git
     cd rental-housing
-  ````
+   ````
 2. **Make sure you have the following installed:**  
    **Java 17:** [Download Java](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)  
    **Docker and Docker Compose:** [Install Docker](https://www.docker.com/get-started/)  
