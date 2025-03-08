@@ -24,11 +24,11 @@ A platform for publishing rental housing listings. Tenants can book accomodation
     htpps://github.com/merfonteen/rental-housing.git
     cd rental-housing
   ````
-2. **Make sure you have the following installed:**
-   **Java 17:** [Download Java](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
-   **Docker and Docker Compose:** [Install Docker](https://www.docker.com/get-started/)
-   **PostgreSQL:** [Download PostgreSQL](https://www.postgresql.org/) if you are going to use docker, this doesn't need to be installed
-   **Redis:** [Download Redis](https://redis.io/) if you are going to use docker, this doesn't need to be installed
+2. **Make sure you have the following installed:**  
+   **Java 17:** [Download Java](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)  
+   **Docker and Docker Compose:** [Install Docker](https://www.docker.com/get-started/)  
+   **PostgreSQL:** [Download PostgreSQL](https://www.postgresql.org/) if you are going to use docker, this doesn't need to be installed  
+   **Redis:** [Download Redis](https://redis.io/) if you are going to use docker, this doesn't need to be installed  
 
 4. **Running the application without Docker:**    
    Update the `application.yml` and `docker-compose.yml` file with your credentials.
@@ -38,7 +38,7 @@ A platform for publishing rental housing listings. Tenants can book accomodation
    ````
 
 5. **Run the application using Docker Compose:**
-````bash
+   ````bash
      docker-compose up --build
    ````
 
